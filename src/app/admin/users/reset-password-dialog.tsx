@@ -1,0 +1,78 @@
+
+'use client'
+
+import { useState } from 'react'
+import { resetPassword } from './server-actions'
+import { LockKeyhole, Loader2 } from 'lucide-react'
+
+export function ResetPasswordDialog({ userId, email }: { userId: string, email: string }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+
+  const handleReset = async () => {
+    setIsLoading(true)
+    setMessage(null)
+    const result = await resetPassword(userId, email)
+    setIsLoading(false)
+
+    if (result.success) {
+      setMessage({ type: 'success', text: 'Password reset email sent.' })
+      setTimeout(() => {
+        setIsOpen(false)
+        setMessage(null)
+      }, 2000)
+    } else {
+      setMessage({ type: 'error', text: result.error || 'Failed to send email.' })
+    }
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setIsOpen(true)}
+        className="btn-action"
+        title="Reset Password"
+      >
+        <LockKeyhole className="h-4 w-4" />
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left">
+            <h3 className="text-lg font-semibold text-foreground mb-2">Reset Password</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Send a password reset email to <strong>{email}</strong>?
+              <br />
+              The user will receive a link to set a new password.
+            </p>
+
+            {message && (
+              <div className={`mb-4 p-3 rounded-md text-sm ${message.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                {message.text}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsOpen(false)}
+                disabled={isLoading}
+                className="btn-secondary h-9"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReset}
+                disabled={isLoading}
+                className="btn-primary h-9"
+              >
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send Email
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
