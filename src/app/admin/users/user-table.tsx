@@ -109,13 +109,13 @@ export function UserTable({ users, roles, permissions }: UserTableProps) {
         </div>
       </div>
 
-      <div className="rounded-md border border-border bg-card">
+      <div className="table-container">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[700px]">
-            <thead className="border-b border-border bg-secondary/50">
-              <tr className="text-left text-muted-foreground select-none">
+          <table className="table-standard min-w-[700px]">
+            <thead className="table-head-standard">
+              <tr>
                 <th
-                  className="p-4 font-medium cursor-pointer hover:text-primary transition-colors"
+                  className="table-th-standard cursor-pointer hover:text-primary transition-colors w-[25%]"
                   onClick={() => handleSort('full_name')}
                 >
                   <div className="flex items-center gap-1">
@@ -123,7 +123,7 @@ export function UserTable({ users, roles, permissions }: UserTableProps) {
                   </div>
                 </th>
                 <th
-                  className="p-4 font-medium cursor-pointer hover:text-primary transition-colors"
+                  className="table-th-standard cursor-pointer hover:text-primary transition-colors w-[30%]"
                   onClick={() => handleSort('email')}
                 >
                   <div className="flex items-center gap-1">
@@ -131,7 +131,7 @@ export function UserTable({ users, roles, permissions }: UserTableProps) {
                   </div>
                 </th>
                 <th
-                  className="p-4 font-medium cursor-pointer hover:text-primary transition-colors"
+                  className="table-th-standard cursor-pointer hover:text-primary transition-colors w-[15%]"
                   onClick={() => handleSort('role')}
                 >
                   <div className="flex items-center gap-1">
@@ -139,22 +139,22 @@ export function UserTable({ users, roles, permissions }: UserTableProps) {
                   </div>
                 </th>
                 <th
-                  className="p-4 font-medium cursor-pointer hover:text-primary transition-colors"
+                  className="table-th-standard cursor-pointer hover:text-primary transition-colors w-[15%]"
                   onClick={() => handleSort('status')}
                 >
                   <div className="flex items-center gap-1">
                     Status <SortIcon column="status" sortColumn={sortColumn} sortOrder={sortOrder} />
                   </div>
                 </th>
-                <th className="p-4 font-medium text-right">Actions</th>
+                <th className="table-th-standard text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {paginatedUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-secondary/20 transition-colors">
-                  <td className="p-4 font-medium text-foreground">{user.full_name || 'N/A'}</td>
-                  <td className="p-4 text-muted-foreground">{user.email}</td>
-                  <td className="p-4">
+                <tr key={user.id} className="table-row-standard">
+                  <td className="table-td-standard font-medium">{user.full_name || 'N/A'}</td>
+                  <td className="table-td-standard text-muted-foreground">{user.email}</td>
+                  <td className="table-td-standard">
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
                     ${user.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
                         user.role === 'manager' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
@@ -162,7 +162,7 @@ export function UserTable({ users, roles, permissions }: UserTableProps) {
                       {user.role.toUpperCase()}
                     </span>
                   </td>
-                  <td className="p-4">
+                  <td className="table-td-standard">
                     {user.is_banned ? (
                       <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
                         Disabled
@@ -173,7 +173,7 @@ export function UserTable({ users, roles, permissions }: UserTableProps) {
                       </span>
                     )}
                   </td>
-                  <td className="p-4 text-right">
+                  <td className="table-td-standard text-right">
                     <UserActions user={user} roles={roles} permissions={permissions} />
                   </td>
                 </tr>

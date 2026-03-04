@@ -3,10 +3,35 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import {
+  Users,
+  ShieldCheck,
+  Plane,
+  ClipboardList,
+  Mail,
+  Globe,
+  Coins,
+  Map,
+  BarChart
+} from 'lucide-react'
+
+const IconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  users: Users,
+  shield: ShieldCheck,
+  plane: Plane,
+  list: ClipboardList,
+  mail: Mail,
+  globe: Globe,
+  coins: Coins,
+  map: Map,
+  chart: BarChart
+}
+
 type NavItem = {
   title: string
   href: string
   show: boolean
+  iconName?: string
 }
 
 type NavGroup = {
@@ -37,7 +62,14 @@ export function AdminSidebarNav({ groups }: { groups: NavGroup[] }) {
                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
             >
-              <span className="w-1 h-1 rounded-full bg-muted-foreground/50 mr-1" />
+              {item.iconName && IconMap[item.iconName] ? (
+                (() => {
+                  const Icon = IconMap[item.iconName]
+                  return <Icon className="h-4 w-4" />
+                })()
+              ) : (
+                <span className="w-1 h-1 rounded-full bg-muted-foreground/50 mr-1" />
+              )}
               {item.title}
             </Link>
           ))}

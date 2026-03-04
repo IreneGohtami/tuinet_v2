@@ -4,30 +4,26 @@
 import { useState } from 'react'
 import { updateRegion } from '../../reference-data-actions'
 import { Pencil, X, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useTransition } from 'react'
 
 export function EditRegionDialog({ region }: { region: { id: string; code: string } }) {
   const [isOpen, setIsOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   async function handleSubmit(formData: FormData) {
-    setIsLoading(true)
-    setMessage(null)
 
     const code = formData.get('code') as string
 
-    const result = await updateRegion(region.id, { code })
-
-    setIsLoading(false)
-    if (result.success) {
-      setMessage({ type: 'success', text: 'Region updated successfully' })
-      setTimeout(() => {
+    startTransition(async () => {
+      const result = await updateRegion(region.id, { code })
+      if (result.success) {
         setIsOpen(false)
-        setMessage(null)
-      }, 1500)
-    } else {
-      setMessage({ type: 'error', text: result.error || 'Failed to update region' })
-    }
+        toast.success('Region updated successfully')
+      } else {
+        toast.error(result.error || 'Failed to update region')
+      }
+    })
   }
 
   return (
@@ -54,12 +50,6 @@ export function EditRegionDialog({ region }: { region: { id: string; code: strin
               </button>
             </div>
 
-            {message && (
-              <div className={`mb-4 p-3 rounded-md text-sm ${message.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                {message.text}
-              </div>
-            )}
-
             <form action={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="code" className="text-sm font-medium text-foreground">Code</label>
@@ -69,7 +59,7 @@ export function EditRegionDialog({ region }: { region: { id: string; code: strin
                   type="text"
                   defaultValue={region.code}
                   required
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="input-standard"
                 />
               </div>
 
@@ -83,10 +73,10 @@ export function EditRegionDialog({ region }: { region: { id: string; code: strin
                 </button>
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isPending}
                   className="btn-primary"
                 >
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Save Changes
                 </button>
               </div>

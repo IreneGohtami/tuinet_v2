@@ -19,7 +19,7 @@ export default async function BookingsPage({ searchParams }: PageProps) {
   const pageSize = 10
 
   // Filters from URL
-  const bookingReferenceId = typeof resolvedParams.ref === 'string' ? resolvedParams.ref : undefined
+  const bookingReference = typeof resolvedParams.ref === 'string' ? resolvedParams.ref : undefined
   const dateFrom = typeof resolvedParams.from === 'string' ? resolvedParams.from : undefined
   const dateTo = typeof resolvedParams.to === 'string' ? resolvedParams.to : undefined
 
@@ -31,7 +31,7 @@ export default async function BookingsPage({ searchParams }: PageProps) {
   const airlines = getArrayParam(resolvedParams.airlines)
   const regions = getArrayParam(resolvedParams.regions)
   const currencies = getArrayParam(resolvedParams.currencies)
-  const salesChannel = typeof resolvedParams.channel === 'string' ? resolvedParams.channel : undefined
+  const bookingStatuses = getArrayParam(resolvedParams.bookingStatuses)
   const customerEmail = typeof resolvedParams.email === 'string' ? resolvedParams.email : undefined
 
   // Fetch bookings and reference data in parallel
@@ -40,13 +40,13 @@ export default async function BookingsPage({ searchParams }: PageProps) {
       page,
       pageSize,
       searchQuery: search,
-      bookingReferenceId,
+      bookingReference,
       dateFrom,
       dateTo,
       airlines,
       regions,
       currencies,
-      salesChannel,
+      bookingStatuses,
       customerEmail
     }),
     getReferenceData()
@@ -82,13 +82,13 @@ export default async function BookingsPage({ searchParams }: PageProps) {
           searchQuery={search}
           referenceData={refData}
           activeFilters={{
-            bookingReferenceId,
+            bookingReference,
             dateFrom,
             dateTo,
             airlines,
             regions,
             currencies,
-            salesChannel,
+            bookingStatuses,
             customerEmail
           }}
         />

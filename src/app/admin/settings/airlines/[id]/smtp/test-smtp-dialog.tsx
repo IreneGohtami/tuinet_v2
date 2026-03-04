@@ -78,7 +78,7 @@ export function TestSmtpDialog({ airlineId, getFormData }: TestSmtpDialogProps) 
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
                   placeholder="name@example.com"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="input-standard"
                   autoFocus
                 />
               </div>

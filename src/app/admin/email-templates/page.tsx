@@ -44,27 +44,27 @@ export default async function EmailTemplatesPage() {
         )}
       </div>
 
-      <div className="rounded-md border border-border bg-card">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-secondary/50">
-            <tr className="text-left text-muted-foreground">
-              <th className="p-4 font-medium">Type</th>
-              <th className="p-4 font-medium">Airline</th>
-              <th className="p-4 font-medium">Region</th>
-              <th className="p-4 font-medium">Currency</th>
-              <th className="p-4 font-medium">Subject</th>
-              <th className="p-4 font-medium text-right">Actions</th>
+      <div className="table-container">
+        <table className="table-standard">
+          <thead className="table-head-standard">
+            <tr>
+              <th className="table-th-standard">Type</th>
+              <th className="table-th-standard">Airline</th>
+              <th className="table-th-standard">Region</th>
+              <th className="table-th-standard">Currency</th>
+              <th className="table-th-standard">Subject</th>
+              <th className="table-th-standard text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {templates.map((template) => (
-              <tr key={template.id} className="border-b border-border last:border-0 hover:bg-secondary/20 transition-colors">
-                <td className="p-4 font-bold text-foreground">{template.type}</td>
-                <td className="p-4 text-muted-foreground">{template.airline?.code || <span className="text-xs uppercase font-semibold text-blue-500">Global</span>}</td>
-                <td className="p-4 text-muted-foreground">{template.region?.code || <span className="text-xs uppercase font-semibold text-blue-500">Global</span>}</td>
-                <td className="p-4 text-muted-foreground">{template.currency?.code || <span className="text-xs uppercase font-semibold text-blue-500">Global</span>}</td>
-                <td className="p-4 text-foreground truncate max-w-[200px]">{template.subject}</td>
-                <td className="p-4 text-right flex justify-end gap-2">
+              <tr key={template.id} className="table-row-standard">
+                <td className="table-td-standard font-bold text-foreground">{template.type}</td>
+                <td className="table-td-standard text-muted-foreground">{template.airline?.code || <span className="text-xs uppercase font-semibold text-blue-500">Global</span>}</td>
+                <td className="table-td-standard text-muted-foreground">{template.region?.code || <span className="text-xs uppercase font-semibold text-blue-500">Global</span>}</td>
+                <td className="table-td-standard text-muted-foreground">{template.currency?.code || <span className="text-xs uppercase font-semibold text-blue-500">Global</span>}</td>
+                <td className="table-td-standard text-foreground truncate max-w-[200px]">{template.subject}</td>
+                <td className="table-td-standard text-right flex justify-end gap-2">
                   {permissions.canCreate && <DuplicateButton id={template.id} />}
                   <Link
                     href={`/admin/email-templates/${template.id}`}

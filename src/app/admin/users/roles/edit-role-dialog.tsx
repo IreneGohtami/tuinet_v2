@@ -4,6 +4,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { updateRole, updateRolePermissions } from './actions'
 import { Pencil, X, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useTransition } from 'react'
 
 const MODULES = ['users', 'bookings', 'settings', 'reports']
 const ACTIONS = ['create', 'read', 'update', 'delete']
@@ -12,8 +14,7 @@ export function EditRoleDialog({ role }: {
   role: { id: string; name: string; description?: string; is_system: boolean }
 }) {
   const [isOpen, setIsOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [isPending, startTransition] = useTransition()
   const [permissions, setPermissions] = useState<Set<string>>(new Set())
   const [loadingPermissions, setLoadingPermissions] = useState(false)
   const [refData, setRefData] = useState<{ airlines: { id: string; code: string }[], regions: { id: string; code: string; name?: string }[], currencies: { id: string; code: string; name?: string }[] }>({ airlines: [], regions: [], currencies: [] })
@@ -88,45 +89,40 @@ export function EditRoleDialog({ role }: {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setIsLoading(true)
-    setMessage(null)
 
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name') as string
     const description = formData.get('description') as string
 
-    // Update role details
-    const roleResult = await updateRole(role.id, {
-      name,
-      description: description || undefined
-    })
+    startTransition(async () => {
+      // Update role details
+      const roleResult = await updateRole(role.id, {
+        name,
+        description: description || undefined
+      })
 
-    if (!roleResult.success) {
-      setIsLoading(false)
-      setMessage({ type: 'error', text: roleResult.error || 'Failed to update role' })
-      return
-    }
+      if (!roleResult.success) {
+        toast.error(roleResult.error || 'Failed to update role')
+        return
+      }
 
-    // Update permissions
-    const permissionsArray = Array.from(permissions).map((p: string) => {
-      const firstColon = p.indexOf(':')
-      const moduleName = p.substring(0, firstColon)
-      const action = p.substring(firstColon + 1)
-      return { module: moduleName, action }
-    })
+      // Update permissions
+      const permissionsArray = Array.from(permissions).map((p: string) => {
+        const firstColon = p.indexOf(':')
+        const moduleName = p.substring(0, firstColon)
+        const action = p.substring(firstColon + 1)
+        return { module: moduleName, action }
+      })
 
-    const permResult = await updateRolePermissions(role.id, permissionsArray)
+      const permResult = await updateRolePermissions(role.id, permissionsArray)
 
-    setIsLoading(false)
-    if (permResult.success) {
-      setMessage({ type: 'success', text: 'Role updated successfully' })
-      setTimeout(() => {
+      if (permResult.success) {
         setIsOpen(false)
-        setMessage(null)
-      }, 1500)
-    } else {
-      setMessage({ type: 'error', text: permResult.error || 'Failed to update permissions' })
-    }
+        toast.success('Role updated successfully')
+      } else {
+        toast.error(permResult.error || 'Failed to update permissions')
+      }
+    })
   }
 
   return (
@@ -153,12 +149,6 @@ export function EditRoleDialog({ role }: {
               </button>
             </div>
 
-            {message && (
-              <div className={`mb-4 p-3 rounded-md text-sm ${message.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                {message.text}
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <label htmlFor="name" className="text-sm font-medium text-foreground">Name</label>
@@ -169,7 +159,7 @@ export function EditRoleDialog({ role }: {
                   defaultValue={role.name}
                   required
                   disabled={role.is_system}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                  className="input-standard disabled:opacity-50"
                 />
                 {role.is_system && (
                   <p className="text-xs text-muted-foreground">System roles cannot be renamed</p>
@@ -194,29 +184,29 @@ export function EditRoleDialog({ role }: {
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : (
-                  <div className="border border-border rounded-lg overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead className="bg-secondary/50">
+                  <div className="table-container">
+                    <table className="table-standard">
+                      <thead className="table-head-standard">
                         <tr>
-                          <th className="p-3 text-left font-medium text-muted-foreground">Module</th>
+                          <th className="table-th-standard">Module</th>
                           {ACTIONS.map(action => (
-                            <th key={action} className="p-3 text-center font-medium text-muted-foreground capitalize">
+                            <th key={action} className="table-th-standard text-center capitalize">
                               {action}
                             </th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {MODULES.map((module, idx) => (
-                          <tr key={module} className={idx % 2 === 0 ? 'bg-background' : 'bg-secondary/20'}>
-                            <td className="p-3 font-medium text-foreground capitalize">{module}</td>
+                        {MODULES.map((module) => (
+                          <tr key={module} className="table-row-standard">
+                            <td className="table-td-standard font-medium capitalize">{module}</td>
                             {ACTIONS.map(action => (
-                              <td key={action} className="p-3 text-center">
+                              <td key={action} className="table-td-standard text-center">
                                 <input
                                   type="checkbox"
                                   checked={hasPermission(module, action)}
                                   onChange={() => togglePermission(module, action)}
-                                  className="h-4 w-4 rounded border-input cursor-pointer"
+                                  className="h-4 w-4 rounded border-input cursor-pointer accent-primary"
                                 />
                               </td>
                             ))}
@@ -321,16 +311,16 @@ export function EditRoleDialog({ role }: {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="btn-secondary"
+                  className="btn-secondary h-11 px-4"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isLoading}
-                  className="btn-primary"
+                  disabled={isPending}
+                  className="btn-primary h-11 px-6 min-w-[140px]"
                 >
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Save Changes
                 </button>
               </div>

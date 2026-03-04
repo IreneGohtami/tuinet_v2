@@ -15,9 +15,10 @@ interface MultiSelectDropdownProps {
   options: ReferenceOption[]
   selectedValues: string[]
   onChange: (values: string[]) => void
+  valueKey?: 'id' | 'code'
 }
 
-export function MultiSelectDropdown({ label, options, selectedValues, onChange }: MultiSelectDropdownProps) {
+export function MultiSelectDropdown({ label, options, selectedValues, onChange, valueKey = 'code' }: MultiSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -42,7 +43,10 @@ export function MultiSelectDropdown({ label, options, selectedValues, onChange }
     onChange(newValues)
   }
 
-  const selectedOptions = options.filter(opt => selectedValues.includes(opt.code))
+  const selectedOptions = options.filter(opt => {
+    const val = String(valueKey === 'id' ? opt.id : opt.code)
+    return selectedValues.includes(val)
+  })
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
@@ -50,7 +54,7 @@ export function MultiSelectDropdown({ label, options, selectedValues, onChange }
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-full flex items-center justify-between px-3 py-2 text-sm bg-secondary/20 border border-border rounded-md hover:border-primary/50 transition-all h-10 overflow-hidden text-left",
+          "w-full flex items-center justify-between px-3 py-2 text-sm bg-background border border-border rounded-md hover:border-primary/50 transition-all h-10 overflow-hidden text-left",
           isOpen && "ring-1 ring-primary border-primary"
         )}
       >
@@ -58,8 +62,14 @@ export function MultiSelectDropdown({ label, options, selectedValues, onChange }
           {selectedValues.length === 0
             ? `All ${label}`
             : selectedValues.length <= 3
-              ? selectedValues.join(', ')
-              : `${selectedValues.slice(0, 3).join(', ')} ... (+${selectedValues.length - 3})`
+              ? selectedValues.map(v => {
+                const opt = options.find(o => String(valueKey === 'id' ? o.id : o.code) === v)
+                return opt ? opt.code : v
+              }).join(', ')
+              : `${selectedValues.slice(0, 3).map(v => {
+                const opt = options.find(o => String(valueKey === 'id' ? o.id : o.code) === v)
+                return opt ? opt.code : v
+              }).join(', ')} ... (+${selectedValues.length - 3})`
           }
         </span>
         <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")} />
@@ -84,17 +94,17 @@ export function MultiSelectDropdown({ label, options, selectedValues, onChange }
               <button
                 type="button"
                 key={option.id}
-                onClick={() => toggleOption(option.code)}
+                onClick={() => toggleOption(String(valueKey === 'id' ? option.id : option.code))}
                 className={cn(
                   "w-full flex items-center px-3 py-2 text-sm rounded-sm hover:bg-secondary/50 transition-colors",
-                  selectedValues.includes(option.code) && "text-primary font-semibold bg-primary/5"
+                  selectedValues.includes(String(valueKey === 'id' ? option.id : option.code)) && "text-primary font-semibold bg-primary/5"
                 )}
               >
                 <div className="flex-1 text-left truncate">
                   <span className="font-bold">{option.code}</span>
                   {option.name ? <span className="ml-2 text-muted-foreground font-normal">{option.name}</span> : ''}
                 </div>
-                {selectedValues.includes(option.code) && <Check className="h-4 w-4" />}
+                {selectedValues.includes(String(valueKey === 'id' ? option.id : option.code)) && <Check className="h-4 w-4" />}
               </button>
             ))}
           </div>
@@ -110,7 +120,7 @@ export function MultiSelectDropdown({ label, options, selectedValues, onChange }
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  toggleOption(opt.code)
+                  toggleOption(String(valueKey === 'id' ? opt.id : opt.code))
                 }}
                 className="hover:text-foreground transition-colors"
               >

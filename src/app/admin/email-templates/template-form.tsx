@@ -6,6 +6,8 @@ import { createTemplate, updateTemplate } from '@/app/admin/email-actions'
 import { useRouter } from 'next/navigation'
 import { Eye, Edit3, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { toast } from 'sonner'
+import { useTransition } from 'react'
 
 interface TemplateFormProps {
   initialData?: Record<string, unknown>
@@ -16,17 +18,14 @@ interface TemplateFormProps {
 
 export function TemplateForm({ initialData, airlines, regions, currencies }: TemplateFormProps) {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
   const [htmlContent, setHtmlContent] = useState((initialData?.html_content as string) || '')
   const [subject, setSubject] = useState((initialData?.subject as string) || '')
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const isEditing = !!initialData?.id
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setLoading(true)
-    setMessage(null)
 
     const formData = new FormData(e.currentTarget)
     const data = {
@@ -40,21 +39,21 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
       variable_placeholders: formData.get('placeholders')?.toString().split(',').map(p => p.trim()).filter(Boolean) || []
     }
 
-    const result = isEditing
-      ? await updateTemplate(initialData.id as string, data)
-      : await createTemplate(data)
+    startTransition(async () => {
+      const result = isEditing
+        ? await updateTemplate(initialData.id as string, data)
+        : await createTemplate(data)
 
-    setLoading(false)
-
-    if (result.success) {
-      setMessage({ type: 'success', text: 'Template ' + (isEditing ? 'updated' : 'created') + ' successfully' })
-      router.refresh()
-      if (!isEditing) {
-        setTimeout(() => router.push('/admin/email-templates'), 1000)
+      if (result.success) {
+        toast.success(`Template ${isEditing ? 'updated' : 'created'} successfully`)
+        router.refresh()
+        if (!isEditing) {
+          setTimeout(() => router.push('/admin/email-templates'), 1000)
+        }
+      } else {
+        toast.error('Error: ' + (result.error || 'Unknown error'))
       }
-    } else {
-      setMessage({ type: 'error', text: 'Error: ' + result.error })
-    }
+    })
   }
 
   // Simple placeholder replacement for preview
@@ -64,14 +63,6 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
 
   return (
     <div className="space-y-6 max-w-5xl">
-      {message && (
-        <div className={`p-4 rounded-md text-sm border opacity-100 transition-opacity ${message.type === 'success'
-          ? 'bg-green-500/10 text-green-500 border-green-500/20'
-          : 'bg-red-500/10 text-red-500 border-red-500/20'
-          }`}>
-          {message.text}
-        </div>
-      )}
 
       <div className="flex border-b border-border mb-6">
         <button
@@ -105,7 +96,7 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
                 name="type"
                 defaultValue={(initialData?.type as string) || ''}
                 placeholder="e.g., booking_confirmation"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="input-standard"
                 required
               />
               <p className="text-xs text-muted-foreground">Unique key used in code to trigger this email.</p>
@@ -116,7 +107,7 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
               <select
                 name="airline_id"
                 defaultValue={(initialData?.airline_id as string) || ''}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="input-standard"
               >
                 <option value="">Global Default</option>
                 {airlines.map(a => (
@@ -130,7 +121,7 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
               <select
                 name="region_id"
                 defaultValue={(initialData?.region_id as string) || ''}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="input-standard"
               >
                 <option value="">Global/Any</option>
                 {regions.map(r => (
@@ -144,7 +135,7 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
               <select
                 name="currency_id"
                 defaultValue={(initialData?.currency_id as string) || ''}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="input-standard"
               >
                 <option value="">Any</option>
                 {currencies.map(c => (
@@ -162,7 +153,7 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Your booking confirmation: {{booking_ref}}"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="input-standard"
                 required
               />
             </div>
@@ -174,7 +165,7 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
                 value={htmlContent}
                 onChange={(e) => setHtmlContent(e.target.value)}
                 placeholder="<h1>Hello {{name}}</h1>..."
-                className="flex min-h-[400px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="input-standard min-h-[400px] font-mono"
                 required
               />
             </div>
@@ -184,7 +175,7 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
               <textarea
                 name="text_content"
                 defaultValue={(initialData?.text_content as string) || ''}
-                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="input-standard min-h-[100px] font-mono"
               />
             </div>
 
@@ -194,7 +185,7 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
                 name="placeholders"
                 defaultValue={(initialData?.variable_placeholders as string[])?.join(', ') || ''}
                 placeholder="booking_ref, name, airline_name"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="input-standard"
               />
             </div>
           </div>
@@ -208,10 +199,10 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
             </Link>
             <button
               type="submit"
-              disabled={loading}
+              disabled={isPending}
               className="btn-primary px-8"
             >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditing ? 'Save Template' : 'Create Template'}
             </button>
           </div>

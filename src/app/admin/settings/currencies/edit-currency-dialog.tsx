@@ -4,14 +4,13 @@
 import { useState, useTransition } from 'react'
 import { updateCurrency } from '../../reference-data-actions'
 import { Pencil, X, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function EditCurrencyDialog({ currency }: { currency: { id: string | number; code: string; name: string | null; symbol: string | null } }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   async function handleSubmit(formData: FormData) {
-    setMessage(null)
 
     const code = formData.get('code') as string
     const name = formData.get('name') as string
@@ -21,13 +20,10 @@ export function EditCurrencyDialog({ currency }: { currency: { id: string | numb
       const result = await updateCurrency(currency.id, { code, name, symbol })
 
       if (result.success) {
-        setMessage({ type: 'success', text: 'Currency updated successfully' })
-        setTimeout(() => {
-          setIsOpen(false)
-          setMessage(null)
-        }, 1500)
+        setIsOpen(false)
+        toast.success('Currency updated successfully')
       } else {
-        setMessage({ type: 'error', text: result.error || 'Failed to update currency' })
+        toast.error(result.error || 'Failed to update currency')
       }
     })
   }
@@ -56,12 +52,6 @@ export function EditCurrencyDialog({ currency }: { currency: { id: string | numb
               </button>
             </div>
 
-            {message && (
-              <div className={`mb-4 p-3 rounded-md text-sm ${message.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                {message.text}
-              </div>
-            )}
-
             <form action={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="code" className="text-sm font-medium text-foreground">Code</label>
@@ -71,7 +61,7 @@ export function EditCurrencyDialog({ currency }: { currency: { id: string | numb
                   type="text"
                   defaultValue={currency.code}
                   required
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="input-standard"
                 />
               </div>
 
@@ -84,7 +74,7 @@ export function EditCurrencyDialog({ currency }: { currency: { id: string | numb
                   defaultValue={currency.name || ''}
                   required
                   placeholder="e.g. US Dollar"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="input-standard"
                 />
               </div>
 
@@ -97,7 +87,7 @@ export function EditCurrencyDialog({ currency }: { currency: { id: string | numb
                   defaultValue={currency.symbol || ''}
                   required
                   placeholder="e.g. $"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="input-standard"
                 />
               </div>
 

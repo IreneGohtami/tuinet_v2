@@ -41,23 +41,23 @@ export default async function CurrenciesPage({
         </div>
       </div>
 
-      <div className="rounded-md border border-border bg-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-secondary/50">
-            <tr className="text-left text-muted-foreground uppercase text-xs tracking-wider">
-              <th className="p-4 font-semibold">Code</th>
-              <th className="p-4 font-semibold">Name</th>
-              <th className="p-4 font-semibold text-center">Symbol</th>
-              <th className="p-4 font-semibold text-right">Actions</th>
+      <div className="table-container">
+        <table className="table-standard">
+          <thead className="table-head-standard">
+            <tr>
+              <th className="table-th-standard">Code</th>
+              <th className="table-th-standard">Name</th>
+              <th className="table-th-standard text-center">Symbol</th>
+              <th className="table-th-standard text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody>
             {currencies.map((currency: any) => (
-              <tr key={currency.id} className="hover:bg-secondary/10 transition-colors group">
-                <td className="p-4 font-bold font-mono text-foreground">{currency.code}</td>
-                <td className="p-4 text-foreground">{currency.name || '-'}</td>
-                <td className="p-4 text-center font-medium">{currency.symbol || '-'}</td>
-                <td className="p-4 text-right">
+              <tr key={currency.id} className="table-row-standard">
+                <td className="table-td-standard font-bold font-mono text-primary">{currency.code}</td>
+                <td className="table-td-standard">{currency.name || '-'}</td>
+                <td className="table-td-standard text-center font-medium">{currency.symbol || '-'}</td>
+                <td className="table-td-standard text-right">
                   <div className="flex justify-end gap-2">
                     {permissions.canUpdate && <EditCurrencyDialog currency={currency} />}
                     {permissions.canDelete && <DeleteCurrencyDialog currency={currency} />}

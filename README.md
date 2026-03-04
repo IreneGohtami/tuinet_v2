@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## 🌟 Overview
+Tuinet v2 is a modern booking management platform built for efficiency and scale. It handles complex booking workflows, passenger management, and financial tracking with a focus on data integrity and a premium user experience.
 
-## Getting Started
+## 🛠️ Tech Stack
+- **Framework**: [Next.js 15+](https://nextjs.org) (App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database & Auth**: [Supabase](https://supabase.com/) (PostgreSQL)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Notifications**: [Sonner](https://sonner.stevenly.me/)
 
-First, run the development server:
+## 🚀 Documentation
+- **[Frontend Development Guidelines](DOCS/FRONTEND_GUIDELINES.md)** - UI standards, standard CSS classes, and component patterns.
+
+## 📁 Directory Structure
+- `src/app/(dashboard)`: Main application pages and dashboard views.
+- `src/app/admin`: Administrative settings (Airlines, Roles, Users, etc.).
+- `src/components`: Reusable UI components and shared layouts.
+- `src/lib`: Core logic, Supabase clients, RBAC, and formatting utilities.
+- `scripts`: Data migration (`migrate-mssql.ts`, `migrate-settings.ts`) and maintenance scripts.
+- `supabase/migrations`: Version-controlled database schema changes.
+
+## ⚙️ Local Setup
+
+### 1. Environment Variables
+Create a `.env.local` file in the root directory and add the following:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# MSSQL Configuration (for migrations)
+MSSQL_USER=your_db_user
+MSSQL_PASSWORD=your_db_password
+MSSQL_DATABASE=your_db_name
+MSSQL_SERVER=your_db_server
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Development Server
+```bash
+npm install
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Running Scripts
+Execute migration or maintenance scripts using `tsx`:
+```bash
+# Migrate settings reference data
+npx tsx scripts/migrate-settings.ts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Migrate bookings and related data
+npx tsx scripts/migrate-mssql.ts
+```
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🏗️ Deployment
+The project is optimized for deployment on **Vercel**. Connect your repository and ensure environment variables are configured in the Vercel dashboard.

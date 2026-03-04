@@ -3,23 +3,23 @@
 
 import { useState } from 'react'
 import { deleteCurrency } from '../../reference-data-actions'
-import { Trash2, Loader2 } from 'lucide-react'
+import { Trash2, X, Loader2, AlertTriangle } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function DeleteCurrencyDialog({ currency }: { currency: { id: string; code: string } }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: 'error', text: string } | null>(null)
 
   const handleDelete = async () => {
     setIsLoading(true)
-    setMessage(null)
     const result = await deleteCurrency(currency.id)
     setIsLoading(false)
 
     if (result.success) {
       setIsOpen(false)
+      toast.success('Currency deleted successfully')
     } else {
-      setMessage({ type: 'error', text: result.error || 'Failed to delete currency' })
+      toast.error(result.error || 'Failed to delete currency')
     }
   }
 
@@ -34,36 +34,47 @@ export function DeleteCurrencyDialog({ currency }: { currency: { id: string; cod
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-left">
-            <h3 className="text-lg font-semibold text-foreground mb-2">Delete Currency</h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              Are you sure you want to delete <strong>{currency.code}</strong>?
-              <br />
-              This action cannot be undone.
-            </p>
-
-            {message && (
-              <div className="mb-4 p-3 rounded-md text-sm bg-red-500/10 text-red-500">
-                {message.text}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 animate-in fade-in duration-200 text-left">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-destructive/10 rounded-full">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground">Delete Currency</h3>
               </div>
-            )}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="rounded-full p-2 hover:bg-secondary transition-colors"
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+                <span className="sr-only">Close</span>
+              </button>
+            </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                Are you sure you want to delete <span className="font-bold text-foreground">{currency.code}</span>?
+              </p>
+              <p className="text-sm text-destructive font-medium p-3 bg-destructive/5 rounded-lg">
+                Warning: This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-8">
               <button
                 onClick={() => setIsOpen(false)}
                 disabled={isLoading}
-                className="btn-secondary h-9"
+                className="btn-secondary h-11 px-4"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={isLoading}
-                className="btn-primary h-9 bg-destructive hover:bg-destructive/90 transition-colors"
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold px-6 h-11 min-w-[120px] rounded-lg transition-all flex items-center justify-center"
               >
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Delete
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Delete'}
               </button>
             </div>
           </div>

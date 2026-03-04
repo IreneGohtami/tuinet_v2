@@ -7,18 +7,19 @@ export interface BookingFilters {
   page?: number
   pageSize?: number
   searchQuery?: string
-  bookingReferenceId?: string
+  bookingReference?: string
   dateFrom?: string
   dateTo?: string
   airlines?: string[]
   regions?: string[]
   currencies?: string[]
+  bookingStatuses?: string[]
   customerEmail?: string
 }
 
 export interface BookingRow {
   id: number
-  booking_reference_id: string | null
+  booking_reference: string | null
   locator: string
   created_at: string
   total_amount: number
@@ -41,12 +42,13 @@ export async function getBookings({
   page = 1,
   pageSize = 10,
   searchQuery = '',
-  bookingReferenceId,
+  bookingReference,
   dateFrom,
   dateTo,
   airlines,
   regions,
   currencies,
+  bookingStatuses,
   customerEmail
 }: BookingFilters) {
   const supabase = await createClient()
@@ -72,11 +74,11 @@ export async function getBookings({
     .order('created_at', { ascending: false })
 
   if (searchQuery) {
-    query = query.or(`booking_reference_id.ilike.%${searchQuery}%,reference.ilike.%${searchQuery}%`)
+    query = query.or(`booking_reference.ilike.%${searchQuery}%,reference.ilike.%${searchQuery}%`)
   }
 
-  if (bookingReferenceId) {
-    query = query.or(`booking_reference_id.ilike.%${bookingReferenceId}%,reference.ilike.%${bookingReferenceId}%`)
+  if (bookingReference) {
+    query = query.or(`booking_reference.ilike.%${bookingReference}%,reference.ilike.%${bookingReference}%`)
   }
 
   if (dateFrom) {
@@ -97,6 +99,10 @@ export async function getBookings({
 
   if (airlines && airlines.length > 0) {
     query = query.in('sales_channel_value', airlines)
+  }
+
+  if (bookingStatuses && bookingStatuses.length > 0) {
+    query = query.in('status_id', bookingStatuses)
   }
 
   if (customerEmail) {
@@ -127,16 +133,20 @@ export async function getBookings({
 export async function getReferenceData() {
   const supabase = await createClient()
 
-  const [airlinesRes, regionsRes, currenciesRes] = await Promise.all([
-    supabase.from('settings_airlines').select('id, code, name'),
-    supabase.from('settings_regions').select('id, code'),
-    supabase.from('settings_currencies').select('id, code, name, symbol')
+  const [airlinesRes, regionsRes, currenciesRes, bookingStatusesRes, countriesRes] = await Promise.all([
+    supabase.from('settings_airlines').select('id, code, name').order('code', { ascending: true }),
+    supabase.from('settings_regions').select('id, code').order('code', { ascending: true }),
+    supabase.from('settings_currencies').select('id, code, symbol').order('code', { ascending: true }),
+    supabase.from('settings_booking_statuses').select('id, code, name').order('name', { ascending: true }),
+    supabase.from('settings_countries').select('id, name').order('name', { ascending: true })
   ])
 
   return {
     airlines: airlinesRes.data || [],
     regions: regionsRes.data || [],
-    currencies: currenciesRes.data || []
+    currencies: currenciesRes.data || [],
+    bookingStatuses: bookingStatusesRes.data || [],
+    countries: countriesRes.data || []
   }
 }
 

@@ -1,4 +1,3 @@
-
 import { AdminSidebarNav } from './admin-sidebar-nav'
 import { getModulePermissions } from '@/lib/rbac'
 
@@ -15,25 +14,27 @@ export async function AdminSidebar() {
       title: 'User Management',
       show: usersPerm.canRead || usersPerm.canCreate || usersPerm.canUpdate || usersPerm.canDelete,
       items: [
-        { title: 'Users', href: '/admin/users', show: usersPerm.canRead },
-        { title: 'Roles', href: '/admin/users/roles', show: usersPerm.canRead }
+        { title: 'Users', href: '/admin/users', show: usersPerm.canRead, iconName: 'users' },
+        { title: 'Roles', href: '/admin/users/roles', show: usersPerm.canRead, iconName: 'shield' }
       ]
     },
     {
       title: 'Settings',
       show: settingsPerm.canRead,
       items: [
-        { title: 'Airlines', href: '/admin/settings/airlines', show: settingsPerm.canRead },
-        { title: 'Regions', href: '/admin/settings/regions', show: settingsPerm.canRead },
-        { title: 'Currencies', href: '/admin/settings/currencies', show: settingsPerm.canRead },
-        { title: 'Email Templates', href: '/admin/email-templates', show: settingsPerm.canRead }
+        { title: 'Airlines (+SMTP)', href: '/admin/settings/airlines', show: settingsPerm.canRead, iconName: 'plane' },
+        { title: 'Booking Statuses', href: '/admin/settings/booking-statuses', show: settingsPerm.canRead, iconName: 'list' },
+        { title: 'Email Templates', href: '/admin/email-templates', show: settingsPerm.canRead, iconName: 'mail' },
+        { title: 'Countries', href: '/admin/settings/countries', show: settingsPerm.canRead, iconName: 'globe' },
+        { title: 'Currencies', href: '/admin/settings/currencies', show: settingsPerm.canRead, iconName: 'coins' },
+        { title: 'Regions', href: '/admin/settings/regions', show: settingsPerm.canRead, iconName: 'map' }
       ]
     },
     {
       title: 'Operations',
       show: bookingsPerm.canRead || reportsPerm.canRead,
       items: [
-        { title: 'Reports', href: '/admin/reports', show: reportsPerm.canRead }
+        { title: 'Reports', href: '/admin/reports', show: reportsPerm.canRead, iconName: 'chart' }
       ]
     }
   ]

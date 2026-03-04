@@ -25,19 +25,21 @@ export default async function RegionsPage() {
         {permissions.canCreate && <CreateRegionDialog />}
       </div>
 
-      <div className="rounded-md border border-border bg-card">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-secondary/50">
-            <tr className="text-left text-muted-foreground">
-              <th className="p-4 font-medium w-2/3">Code</th>
-              <th className="p-4 font-medium text-right">Actions</th>
+      <div className="table-container">
+        <table className="table-standard">
+          <thead className="table-head-standard">
+            <tr>
+              <th className="table-th-standard">Code</th>
+              <th className="table-th-standard text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {regions.map((region) => (
-              <tr key={region.id} className="border-b border-border last:border-0 hover:bg-secondary/20 transition-colors">
-                <td className="p-4 font-medium font-mono text-foreground">{region.code}</td>
-                <td className="p-4 text-right flex justify-end gap-2">
+              <tr key={region.id} className="table-row-standard">
+                <td className="table-td-standard font-mono font-bold text-primary">
+                  {region.code}
+                </td>
+                <td className="table-td-standard text-right flex justify-end gap-2">
                   {permissions.canUpdate && <EditRegionDialog region={region} />}
                   {permissions.canDelete && <DeleteRegionDialog region={region} />}
                 </td>

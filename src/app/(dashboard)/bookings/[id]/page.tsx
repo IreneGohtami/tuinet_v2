@@ -1,5 +1,5 @@
 
-import { getBookingById } from '../actions'
+import { getBookingById, getReferenceData } from '../actions'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -15,7 +15,7 @@ import {
   MapPin,
   ArrowRight
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { StatusBadge } from '@/components/ui/status-badge'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -23,11 +23,20 @@ interface PageProps {
 
 interface Passenger {
   id: number
+  title?: string
   first_name: string
   last_name1: string
   last_name2?: string
-  document_number?: string
+  passenger_type?: string
+  gender?: string
+  phone?: string
   email?: string
+  birth_date?: string
+  nationality_country_id?: number
+  document_type?: string
+  document_number?: string
+  document_issue_date?: string
+  document_expiry_date?: string
   is_main_passenger: boolean
 }
 
@@ -84,7 +93,10 @@ export default async function BookingDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  const { data: booking, error } = await getBookingById(bookingId)
+  const [{ data: booking, error }, refData] = await Promise.all([
+    getBookingById(bookingId),
+    getReferenceData()
+  ])
 
   if (error || !booking) {
     return (
@@ -98,6 +110,8 @@ export default async function BookingDetailPage({ params }: PageProps) {
     )
   }
 
+  const currencyCode = refData.currencies.find(c => c.id.toString() === booking.currency_id.toString())?.code || booking.currency_id
+
   // Cast related arrays to their types
   const passengers = booking.passengers as Passenger[]
   const flights = booking.flights as Flight[]
@@ -105,6 +119,21 @@ export default async function BookingDetailPage({ params }: PageProps) {
   const tours = booking.tours as Tour[]
   const transfers = booking.transfers as Transfer[]
   const invoices = booking.invoices as Invoice[]
+
+  const getCountryName = (countryId?: number) => {
+    if (!countryId) return null
+    return refData.countries.find(c => c.id === countryId)?.name
+  }
+
+  const formatDate = (dateInput: string | Date) => {
+    if (!dateInput) return 'N/A'
+    const date = new Date(dateInput)
+    if (isNaN(date.getTime())) return 'N/A'
+    const d = String(date.getDate()).padStart(2, '0')
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const y = date.getFullYear()
+    return `${d}/${m}/${y}`
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20">
@@ -120,22 +149,12 @@ export default async function BookingDetailPage({ params }: PageProps) {
           </Link>
           <div className="space-y-1">
             <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
-              Booking <span className="text-primary">{booking.booking_reference_id || booking.reference || 'N/A'}</span>
+              Booking <span className="text-primary">{booking.booking_reference || 'N/A'}</span>
             </h1>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className={cn(
-            "px-4 py-1.5 rounded-full text-sm font-semibold shadow-sm",
-            booking.status_id === 1 ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" :
-              booking.status_id === 2 ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300" :
-                "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-          )}>
-            Status {booking.status_id}
-          </div>
-          <div className="px-4 py-1.5 rounded-full bg-secondary text-secondary-foreground text-sm font-semibold shadow-sm">
-            {(booking.total_amount as number).toLocaleString(undefined, { minimumFractionDigits: 2 })} {booking.currency_id}
-          </div>
+          <StatusBadge statusId={booking.status_id} bookingStatuses={refData.bookingStatuses} size="md" />
         </div>
       </div>
 
@@ -145,16 +164,13 @@ export default async function BookingDetailPage({ params }: PageProps) {
         <div className="lg:col-span-1 space-y-8">
           {/* General Info */}
           <section className="bg-card border border-border rounded-2xl p-6 shadow-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-3 opacity-5">
-              <Info className="h-16 w-16" />
-            </div>
             <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
               <Info className="h-5 w-5 text-primary" /> General Information
             </h3>
             <div className="space-y-5">
               <div className="flex justify-between items-center text-sm border-b border-border/50 pb-2">
                 <span className="text-muted-foreground">Created At</span>
-                <span className="font-semibold">{new Date(booking.created_at).toLocaleString()}</span>
+                <span className="font-semibold">{formatDate(booking.created_at)}</span>
               </div>
               <div className="flex justify-between items-center text-sm border-b border-border/50 pb-2">
                 <span className="text-muted-foreground">Region</span>
@@ -164,9 +180,11 @@ export default async function BookingDetailPage({ params }: PageProps) {
                 <span className="text-muted-foreground">Sales Channel</span>
                 <span className="font-semibold">{booking.sales_channel_value || 'Direct'}</span>
               </div>
-              <div className="flex justify-between items-center text-sm border-b border-border/50 pb-2">
-                <span className="text-muted-foreground">Agent ID</span>
-                <span className="font-semibold">{booking.agent_office_id || 'N/A'}</span>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Total Amount</span>
+                <span className="font-bold text-primary text-lg">
+                  {currencyCode} {(booking.total_amount as number).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </span>
               </div>
             </div>
           </section>
@@ -179,15 +197,34 @@ export default async function BookingDetailPage({ params }: PageProps) {
             <div className="space-y-4">
               {passengers.map((p) => (
                 <div key={p.id} className="p-4 bg-secondary/20 rounded-xl border border-border/50 hover:border-primary/30 transition-colors">
-                  <div className="font-bold flex items-center gap-2">
-                    {p.first_name} {p.last_name1} {p.last_name2}
-                    {p.is_main_passenger && (
-                      <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full uppercase tracking-tighter">Main</span>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <div className="font-bold">
+                      {p.title && <span className="text-xs text-muted-foreground mr-1">{p.title}</span>}
+                      {p.first_name} {p.last_name1} {p.last_name2}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {p.is_main_passenger && (
+                        <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full uppercase tracking-tighter">Main</span>
+                      )}
+                      {p.passenger_type && (
+                        <span className="text-[10px] bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded-full uppercase tracking-tighter">{p.passenger_type}</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground mt-1 flex flex-col gap-0.5">
-                    <span className="flex items-center gap-1.5"><FileText className="h-3 w-3" /> {p.document_number || 'No document'}</span>
-                    <span className="flex items-center gap-1.5"><Info className="h-3 w-3" /> {p.email || 'No email'}</span>
+                  <div className="text-sm text-muted-foreground mt-2 space-y-1">
+                    {p.gender && <div className="flex items-center gap-1.5"><Users className="h-3 w-3" /> {p.gender}</div>}
+                    {p.birth_date && <div className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Born: {formatDate(p.birth_date)}</div>}
+                    {getCountryName(p.nationality_country_id) && <div className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> {getCountryName(p.nationality_country_id)}</div>}
+                    {p.phone && <div className="flex items-center gap-1.5"><Info className="h-3 w-3" /> {p.phone}</div>}
+                    {p.is_main_passenger && p.email && <div className="flex items-center gap-1.5"><Info className="h-3 w-3" /> {p.email}</div>}
+                    {p.document_type && p.document_number && p.document_number !== 'X' && (
+                      <div className="flex items-center gap-1.5">
+                        <FileText className="h-3 w-3" />
+                        <span className="text-xs">{p.document_type}: {p.document_number}</span>
+                        {p.document_issue_date && <span className="text-xs"> (Issued: {formatDate(p.document_issue_date)})</span>}
+                        {p.document_expiry_date && <span className="text-xs"> (Expires: {formatDate(p.document_expiry_date)})</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -268,9 +305,9 @@ export default async function BookingDetailPage({ params }: PageProps) {
                       <div className="space-y-1">
                         <h4 className="font-bold text-lg">{h.description || 'Hotel Service'}</h4>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {h.check_in_date}</span>
+                          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {formatDate(h.check_in_date)}</span>
                           <ArrowRight className="h-3 w-3" />
-                          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {h.check_out_date}</span>
+                          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {formatDate(h.check_out_date)}</span>
                         </div>
                       </div>
                       <div className="text-right">
@@ -299,7 +336,7 @@ export default async function BookingDetailPage({ params }: PageProps) {
                     <div key={t.id} className="text-sm border-b border-border/40 pb-3 last:border-0 last:pb-0">
                       <p className="font-bold">{t.description}</p>
                       <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                        <Calendar className="h-3 w-3" /> {new Date(t.tour_date).toLocaleDateString()}
+                        <Calendar className="h-3 w-3" /> {formatDate(t.tour_date)}
                       </p>
                     </div>
                   ))}
@@ -337,32 +374,32 @@ export default async function BookingDetailPage({ params }: PageProps) {
               </h3>
             </div>
             <div className="p-6">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-muted-foreground border-b border-border">
-                      <th className="pb-3 pr-4 font-semibold uppercase text-[10px] tracking-widest">Inv Number</th>
-                      <th className="pb-3 pr-4 font-semibold uppercase text-[10px] tracking-widest">Date</th>
-                      <th className="pb-3 pr-4 font-semibold uppercase text-[10px] tracking-widest text-right">Base</th>
-                      <th className="pb-3 font-semibold uppercase text-[10px] tracking-widest text-right">VAT</th>
+              <div className="table-container">
+                <table className="table-standard">
+                  <thead className="table-head-standard">
+                    <tr>
+                      <th className="table-th-standard">Inv Number</th>
+                      <th className="table-th-standard">Date</th>
+                      <th className="table-th-standard text-right">Base</th>
+                      <th className="table-th-standard text-right">VAT</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border/50">
+                  <tbody>
                     {invoices.map((inv) => (
-                      <tr key={inv.id}>
-                        <td className="py-3 pr-4 font-medium">{inv.invoice_number || 'PENDING'}</td>
-                        <td className="py-3 pr-4 text-muted-foreground">{new Date(inv.invoice_date).toLocaleDateString()}</td>
-                        <td className="py-3 pr-4 text-right font-medium">
+                      <tr key={inv.id} className="table-row-standard">
+                        <td className="table-td-standard font-medium">{inv.invoice_number || 'PENDING'}</td>
+                        <td className="table-td-standard text-muted-foreground">{formatDate(inv.invoice_date)}</td>
+                        <td className="table-td-standard text-right font-medium">
                           {inv.booking_invoice_details?.reduce((acc: number, d: InvoiceDetail) => acc + (Number(d.tax_base) || 0), 0).toLocaleString()}
                         </td>
-                        <td className="py-3 text-right font-medium text-primary">
+                        <td className="table-td-standard text-right font-medium text-primary">
                           {inv.booking_invoice_details?.reduce((acc: number, d: InvoiceDetail) => acc + (Number(d.vat) || 0), 0).toLocaleString()}
                         </td>
                       </tr>
                     ))}
                     {invoices.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="py-8 text-center text-muted-foreground italic">No invoices found</td>
+                        <td colSpan={4} className="table-td-standard py-8 text-center text-muted-foreground italic">No invoices found</td>
                       </tr>
                     )}
                   </tbody>

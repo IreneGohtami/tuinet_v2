@@ -4,33 +4,29 @@
 import { useState } from 'react'
 import { createRole } from './actions'
 import { Plus, X, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useTransition } from 'react'
 
 export function CreateRoleDialog() {
   const [isOpen, setIsOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setIsLoading(true)
-    setMessage(null)
 
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name') as string
     const description = formData.get('description') as string
 
-    const result = await createRole({ name, description: description || undefined })
-
-    setIsLoading(false)
-    if (result.success) {
-      setMessage({ type: 'success', text: 'Role created successfully' })
-      setTimeout(() => {
+    startTransition(async () => {
+      const result = await createRole({ name, description: description || undefined })
+      if (result.success) {
         setIsOpen(false)
-        setMessage(null)
-      }, 1500)
-    } else {
-      setMessage({ type: 'error', text: result.error || 'Failed to create role' })
-    }
+        toast.success('Role created successfully')
+      } else {
+        toast.error(result.error || 'Failed to create role')
+      }
+    })
   }
 
   if (!isOpen) {
@@ -59,12 +55,6 @@ export function CreateRoleDialog() {
           </button>
         </div>
 
-        {message && (
-          <div className={`mb-4 p-3 rounded-md text-sm ${message.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-            {message.text}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="name" className="text-sm font-medium text-foreground">Name</label>
@@ -74,7 +64,7 @@ export function CreateRoleDialog() {
               type="text"
               required
               placeholder="e.g. manager"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="input-standard"
             />
           </div>
 
@@ -93,16 +83,16 @@ export function CreateRoleDialog() {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="btn-secondary"
+              className="btn-secondary h-11 px-4"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isLoading}
-              className="btn-primary"
+              disabled={isPending}
+              className="btn-primary h-11 px-6"
             >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create
             </button>
           </div>

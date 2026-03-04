@@ -25,37 +25,42 @@ export default async function RolesPage() {
         {permissions.canCreate && <CreateRoleDialog />}
       </div>
 
-      <div className="rounded-md border border-border bg-card">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-secondary/50">
-            <tr className="text-left text-muted-foreground">
-              <th className="p-4 font-medium w-1/4">Name</th>
-              <th className="p-4 font-medium w-1/2">Description</th>
-              <th className="p-4 font-medium w-1/12 text-center">System</th>
-              <th className="p-4 font-medium text-right">Actions</th>
+      <div className="table-container">
+        <table className="table-standard">
+          <thead className="table-head-standard">
+            <tr>
+              <th className="table-th-standard">Name</th>
+              <th className="table-th-standard">Description</th>
+              <th className="table-th-standard text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {roles.map((role) => (
-              <tr key={role.id} className="border-b border-border last:border-0 hover:bg-secondary/20 transition-colors">
-                <td className="p-4 font-medium text-foreground">{role.name}</td>
-                <td className="p-4 text-muted-foreground">{role.description || '—'}</td>
-                <td className="p-4 text-center">
-                  {role.is_system && (
-                    <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-500">
-                      System
-                    </span>
-                  )}
+              <tr key={role.id} className="table-row-standard">
+                <td className="table-td-standard font-medium">
+                  <div className="flex items-center gap-2">
+                    {role.name}
+                    {role.is_system && (
+                      <span className="px-2 py-0.5 rounded-full bg-secondary text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        System
+                      </span>
+                    )}
+                  </div>
                 </td>
-                <td className="p-4 text-right flex justify-end gap-2">
-                  {permissions.canUpdate && <EditRoleDialog role={role} />}
-                  {!role.is_system && permissions.canDelete && <DeleteRoleDialog role={role} />}
+                <td className="table-td-standard text-muted-foreground italic">
+                  {role.description || 'No description'}
+                </td>
+                <td className="table-td-standard text-right">
+                  <div className="flex justify-end gap-2">
+                    {permissions.canUpdate && <EditRoleDialog role={role} />}
+                    {!role.is_system && permissions.canDelete && <DeleteRoleDialog role={role} />}
+                  </div>
                 </td>
               </tr>
             ))}
             {roles.length === 0 && (
               <tr>
-                <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                <td colSpan={3} className="p-8 text-center text-muted-foreground">
                   No roles found.
                 </td>
               </tr>

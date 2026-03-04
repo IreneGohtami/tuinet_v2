@@ -95,7 +95,7 @@ export function SmtpSettingsForm({ airlineId, initialData }: SmtpSettingsFormPro
             <input
               name="host"
               defaultValue={(initialData?.host as string) || 'outlook.office365.com'}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="input-standard"
               required
             />
           </div>
@@ -105,7 +105,7 @@ export function SmtpSettingsForm({ airlineId, initialData }: SmtpSettingsFormPro
               name="port"
               type="number"
               defaultValue={(initialData?.port as number) || 587}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="input-standard"
               required
             />
           </div>
@@ -117,7 +117,7 @@ export function SmtpSettingsForm({ airlineId, initialData }: SmtpSettingsFormPro
             name="user"
             type="email"
             defaultValue={(initialData?.user as string) || ''}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="input-standard"
             required
           />
         </div>
@@ -129,7 +129,7 @@ export function SmtpSettingsForm({ airlineId, initialData }: SmtpSettingsFormPro
               name="password"
               type="password"
               defaultValue={(initialData?.password as string) || ''}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="input-standard"
               required={authType === 'BASIC'}
             />
           </div>
@@ -146,7 +146,7 @@ export function SmtpSettingsForm({ airlineId, initialData }: SmtpSettingsFormPro
               <input
                 name="tenant_id"
                 defaultValue={(initialData?.tenant_id as string) || ''}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="input-standard"
                 required={authType === 'OAUTH2'}
               />
             </div>
@@ -155,7 +155,7 @@ export function SmtpSettingsForm({ airlineId, initialData }: SmtpSettingsFormPro
               <input
                 name="client_id"
                 defaultValue={(initialData?.client_id as string) || ''}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="input-standard"
                 required={authType === 'OAUTH2'}
               />
             </div>
@@ -165,7 +165,7 @@ export function SmtpSettingsForm({ airlineId, initialData }: SmtpSettingsFormPro
                 name="client_secret"
                 type="password"
                 defaultValue={(initialData?.client_secret as string) || ''}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="input-standard"
                 required={authType === 'OAUTH2'}
               />
             </div>

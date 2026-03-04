@@ -9,7 +9,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Search,
-  Loader2,
   Calendar,
   ExternalLink,
   Filter,
@@ -17,18 +16,19 @@ import {
   ChevronUp,
   User,
   Globe,
-  DollarSign,
-  Monitor,
+  Plane,
   RefreshCw
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { MultiSelectDropdown } from '@/components/ui/multi-select-dropdown'
+import { DatePicker } from '@/components/ui/date-picker'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { useTransition } from 'react'
 
 interface Booking {
   id: number
   locator: string
-  booking_reference_id: string | null
+  booking_reference: string | null
   reference: string | null
   created_at: string
   total_amount: number
@@ -51,6 +51,7 @@ interface ReferenceData {
   airlines: ReferenceItem[]
   regions: ReferenceItem[]
   currencies: ReferenceItem[]
+  bookingStatuses: ReferenceItem[]
 }
 
 interface BookingTableProps {
@@ -61,12 +62,13 @@ interface BookingTableProps {
   searchQuery: string
   referenceData: ReferenceData
   activeFilters: {
-    bookingReferenceId?: string
+    bookingReference?: string
     dateFrom?: string
     dateTo?: string
     airlines?: string[]
     regions?: string[]
     currencies?: string[]
+    bookingStatuses?: string[]
     customerEmail?: string
   }
 }
@@ -87,12 +89,13 @@ export function BookingTable({
 
   // Local state for filters being edited
   const [filters, setFilters] = useState({
-    bookingReferenceId: activeFilters.bookingReferenceId || initialSearchQuery || '',
+    bookingReference: activeFilters.bookingReference || initialSearchQuery || '',
     dateFrom: activeFilters.dateFrom || '',
     dateTo: activeFilters.dateTo || '',
     airlines: activeFilters.airlines || [],
     regions: activeFilters.regions || [],
     currencies: activeFilters.currencies || [],
+    bookingStatuses: activeFilters.bookingStatuses || [],
     customerEmail: activeFilters.customerEmail || ''
   })
 
@@ -112,7 +115,7 @@ export function BookingTable({
 
       const params = new URLSearchParams()
       // Combined search / reference
-      if (filters.bookingReferenceId) params.set('ref', filters.bookingReferenceId)
+      if (filters.bookingReference) params.set('ref', filters.bookingReference)
 
       if (filters.dateFrom) params.set('from', filters.dateFrom)
       if (filters.dateTo) params.set('to', filters.dateTo)
@@ -121,6 +124,7 @@ export function BookingTable({
       filters.airlines.forEach(a => params.append('airlines', a))
       filters.regions.forEach(r => params.append('regions', r))
       filters.currencies.forEach(c => params.append('currencies', c))
+      filters.bookingStatuses.forEach(s => params.append('bookingStatuses', s))
 
       params.set('page', '1')
       router.push(`?${params.toString()}`)
@@ -130,43 +134,17 @@ export function BookingTable({
   const clearFilters = () => {
     startTransition(() => {
       setFilters({
-        bookingReferenceId: '',
+        bookingReference: '',
         dateFrom: '',
         dateTo: '',
         airlines: [],
         regions: [],
         currencies: [],
+        bookingStatuses: [],
         customerEmail: ''
       })
       router.push('/bookings')
     })
-  }
-
-  const toggleMultiSelect = (type: 'airlines' | 'regions' | 'currencies', value: string) => {
-    setFilters(prev => {
-      const current = [...prev[type]] as string[]
-      const index = current.indexOf(value)
-      if (index > -1) {
-        current.splice(index, 1)
-      } else {
-        current.push(value)
-      }
-      return { ...prev, [type]: current }
-    })
-  }
-
-  const getStatusBadge = (statusId: number) => {
-    const statuses: Record<number, { label: string, color: string }> = {
-      1: { label: 'Active', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
-      2: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
-      3: { label: 'Cancelled', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
-    }
-    const status = statuses[statusId] || { label: 'Unknown', color: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300' }
-    return (
-      <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", status.color)}>
-        {status.label}
-      </span>
-    )
   }
 
   return (
@@ -185,17 +163,27 @@ export function BookingTable({
           >
             <Filter className="h-4 w-4" />
             Filters
-            {(filters.airlines.length > 0 || filters.regions.length > 0 || filters.currencies.length > 0) && (
+            {(filters.airlines.length > 0 || filters.regions.length > 0 || filters.currencies.length > 0 || filters.bookingStatuses.length > 0) && (
               <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-primary text-primary-foreground rounded-full">
-                {filters.airlines.length + filters.regions.length + filters.currencies.length}
+                {filters.airlines.length + filters.regions.length + filters.currencies.length + filters.bookingStatuses.length}
               </span>
             )}
             {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
         </div>
 
-        <div className="text-sm text-muted-foreground whitespace-nowrap">
-          Total: <span className="font-semibold text-foreground">{totalCount}</span> bookings
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-muted-foreground whitespace-nowrap">
+            Total: <span className="font-semibold text-foreground">{totalCount}</span> bookings
+          </div>
+          <button
+            onClick={() => startTransition(() => router.refresh())}
+            disabled={isPending}
+            className="btn-action h-8 w-8 text-muted-foreground hover:text-primary transition-all active:scale-95"
+            title="Refresh bookings"
+          >
+            <RefreshCw className={cn("h-4 w-4", isPending && "animate-spin text-primary")} />
+          </button>
         </div>
       </div>
 
@@ -211,9 +199,9 @@ export function BookingTable({
                 <input
                   type="text"
                   placeholder="Ref or ID..."
-                  className="w-full pl-9 pr-3 py-2 text-sm bg-secondary/20 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary h-10"
-                  value={filters.bookingReferenceId}
-                  onChange={(e) => setFilters(prev => ({ ...prev, bookingReferenceId: e.target.value }))}
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary h-10"
+                  value={filters.bookingReference}
+                  onChange={(e) => setFilters(prev => ({ ...prev, bookingReference: e.target.value }))}
                 />
               </div>
             </div>
@@ -221,17 +209,15 @@ export function BookingTable({
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Date Range (From - To)</label>
               <div className="flex gap-2">
-                <input
-                  type="date"
-                  className="w-full px-3 py-2 text-sm bg-secondary/20 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary h-10"
+                <DatePicker
                   value={filters.dateFrom}
-                  onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                  onChange={(val) => setFilters(prev => ({ ...prev, dateFrom: val }))}
+                  placeholder="From Date"
                 />
-                <input
-                  type="date"
-                  className="w-full px-3 py-2 text-sm bg-secondary/20 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary h-10"
+                <DatePicker
                   value={filters.dateTo}
-                  onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                  onChange={(val) => setFilters(prev => ({ ...prev, dateTo: val }))}
+                  placeholder="To Date"
                 />
               </div>
             </div>
@@ -243,7 +229,7 @@ export function BookingTable({
                 <input
                   type="email"
                   placeholder="customer@example.com"
-                  className="w-full pl-9 pr-3 py-2 text-sm bg-secondary/20 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary h-10"
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary h-10"
                   value={filters.customerEmail}
                   onChange={(e) => setFilters(prev => ({ ...prev, customerEmail: e.target.value }))}
                 />
@@ -252,7 +238,7 @@ export function BookingTable({
 
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Sales Channel</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Sales Channel (Airline)</label>
               <MultiSelectDropdown
                 label="Sales Channel"
                 options={referenceData.airlines}
@@ -278,8 +264,20 @@ export function BookingTable({
                   options={referenceData.currencies}
                   selectedValues={filters.currencies}
                   onChange={(values) => setFilters(prev => ({ ...prev, currencies: values }))}
+                  valueKey="id"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Booking Status</label>
+              <MultiSelectDropdown
+                label="Booking Status"
+                options={referenceData.bookingStatuses}
+                selectedValues={filters.bookingStatuses}
+                onChange={(values) => setFilters(prev => ({ ...prev, bookingStatuses: values }))}
+                valueKey="id"
+              />
             </div>
           </div>
 
@@ -301,7 +299,7 @@ export function BookingTable({
       )}
 
       {/* Bookings Table */}
-      <div className="relative rounded-md border border-border bg-card shadow-sm overflow-hidden">
+      <div className="table-container">
         {isPending && (
           <div className="absolute inset-0 z-20 bg-background/40 backdrop-blur-[1px] flex items-center justify-center animate-in fade-in duration-200">
             <div className="flex flex-col items-center gap-2 p-4 bg-card border border-border rounded-lg shadow-xl">
@@ -311,41 +309,41 @@ export function BookingTable({
           </div>
         )}
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[1000px]">
-            <thead className="border-b border-border bg-secondary/30">
-              <tr className="text-left text-muted-foreground select-none">
-                <th className="p-4 font-semibold">Booking Ref</th>
-                <th className="p-4 font-semibold">Customer</th>
-                <th className="p-4 font-semibold">Details</th>
-                <th className="p-4 font-semibold">Date</th>
-                <th className="p-4 font-semibold text-right">Amount</th>
-                <th className="p-4 font-semibold text-center">Status</th>
-                <th className="p-4 font-semibold text-right">Actions</th>
+          <table className="table-standard min-w-[1000px]">
+            <thead className="table-head-standard">
+              <tr>
+                <th className="table-th-standard">Booking Ref</th>
+                <th className="table-th-standard">Customer</th>
+                <th className="table-th-standard">Details</th>
+                <th className="table-th-standard">Date</th>
+                <th className="table-th-standard text-right">Amount</th>
+                <th className="table-th-standard text-center">Status</th>
+                <th className="table-th-standard text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {initialBookings.map((booking) => (
-                <tr key={booking.id} className="hover:bg-secondary/40 transition-colors group">
+                <tr key={booking.id} className="table-row-standard group">
                   <td
-                    className="p-4 cursor-pointer"
+                    className="table-td-standard cursor-pointer"
                     onClick={() => router.push(`/bookings/${booking.id}`)}
                   >
                     <div className="flex flex-col">
                       <span className="font-bold text-base text-foreground group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
-                        {booking.booking_reference_id || booking.reference || 'None'}
+                        {booking.booking_reference || booking.reference || 'None'}
                       </span>
                     </div>
                   </td>
-                  <td className="p-4">
+                  <td className="table-td-standard">
                     <div className="flex flex-col">
                       <span className="font-medium text-foreground">{booking.passenger_name}</span>
                       <span className="text-xs text-muted-foreground">{booking.passenger_email}</span>
                     </div>
                   </td>
-                  <td className="p-4">
+                  <td className="table-td-standard">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Monitor className="h-3 w-3" />
+                        <Plane className="h-3 w-3" />
                         Channel: <span className="text-foreground font-medium">{booking.sales_channel_value || 'Direct'}</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -354,31 +352,37 @@ export function BookingTable({
                       </div>
                     </div>
                   </td>
-                  <td className="p-4">
+                  <td className="table-td-standard">
                     <div className="flex flex-col text-xs">
                       <div className="flex items-center gap-1.5 text-muted-foreground">
                         <Calendar className="h-3 w-3" />
-                        {new Date(booking.created_at).toLocaleDateString()}
+                        {(() => {
+                          const date = new Date(booking.created_at)
+                          const d = String(date.getDate()).padStart(2, '0')
+                          const m = String(date.getMonth() + 1).padStart(2, '0')
+                          const y = date.getFullYear()
+                          return `${d}/${m}/${y}`
+                        })()}
                       </div>
                       <div className="text-[10px] text-muted-foreground/60 ml-4.5">
                         {new Date(booking.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
                   </td>
-                  <td className="p-4 text-right">
+                  <td className="table-td-standard text-right">
                     <div className="flex flex-col items-end">
                       <span className="font-bold text-foreground">
-                        {booking.total_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {booking.total_amount.toLocaleString()}
                       </span>
                       <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
-                        {referenceData.currencies.find(c => c.id.toString() === booking.currency_id.toString())?.symbol || booking.currency_id} {referenceData.currencies.find(c => c.id.toString() === booking.currency_id.toString())?.code || ''}
+                        {referenceData.currencies.find(c => c.id.toString() === booking.currency_id.toString())?.code || ''}
                       </span>
                     </div>
                   </td>
-                  <td className="p-4 text-center">
-                    {getStatusBadge(booking.status_id)}
+                  <td className="table-td-standard text-center">
+                    <StatusBadge statusId={booking.status_id} bookingStatuses={referenceData.bookingStatuses} />
                   </td>
-                  <td className="p-4 text-right">
+                  <td className="table-td-standard text-right">
                     <button
                       onClick={() => router.push(`/bookings/${booking.id}`)}
                       className="p-2 hover:bg-primary/10 rounded-md transition-colors group"
