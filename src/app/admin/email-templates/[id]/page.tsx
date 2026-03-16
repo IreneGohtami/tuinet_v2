@@ -10,9 +10,9 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
 
   const [templateResult, airlines, regions, currencies] = await Promise.all([
     supabaseAdmin.from('email_templates').select('*').eq('id', id).single(),
-    supabaseAdmin.from('settings_airlines').select('id, name, code').order('name'),
-    supabaseAdmin.from('settings_regions').select('id, code').order('code'),
-    supabaseAdmin.from('settings_currencies').select('id, code').order('code'),
+    supabaseAdmin.from('setting_airlines').select('id, name, code').order('name'),
+    supabaseAdmin.from('setting_regions').select('id, code').order('code'),
+    supabaseAdmin.from('setting_currencies').select('id, code').order('code'),
   ])
 
   if (templateResult.error || !templateResult.data) {

@@ -7,7 +7,7 @@ import { getModulePermissions } from '@/lib/rbac'
 
 export default async function RegionsPage() {
   const [{ data: regions, error }, permissions] = await Promise.all([
-    supabaseAdmin.from('settings_regions').select('*').order('code', { ascending: true }),
+    supabaseAdmin.from('setting_regions').select('*').order('code', { ascending: true }),
     getModulePermissions('settings')
   ])
 

@@ -212,7 +212,7 @@ async function fetchSMTPSettings(airline_id?: string) {
   if (!airline_id) return null
 
   const { data, error } = await supabaseAdmin
-    .from('settings_airline_smtp')
+    .from('setting_airline_smtp')
     .select('*')
     .eq('airline_id', airline_id)
     .single()

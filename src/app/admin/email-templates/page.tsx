@@ -10,13 +10,13 @@ export default async function EmailTemplatesPage() {
   const [templatesResult, _airlinesResult, _regionsResult, _currenciesResult, permissions] = await Promise.all([
     supabaseAdmin.from('email_templates').select(`
       *,
-      airline:settings_airlines(name, code),
-      region:settings_regions(code),
-      currency:settings_currencies(code)
+      airline:setting_airlines(name, code),
+      region:setting_regions(code),
+      currency:setting_currencies(code)
     `).order('type', { ascending: true }),
-    supabaseAdmin.from('settings_airlines').select('id, name, code'),
-    supabaseAdmin.from('settings_regions').select('id, code'),
-    supabaseAdmin.from('settings_currencies').select('id, code'),
+    supabaseAdmin.from('setting_airlines').select('id, name, code'),
+    supabaseAdmin.from('setting_regions').select('id, code'),
+    supabaseAdmin.from('setting_currencies').select('id, code'),
     getModulePermissions('settings')
   ])
 

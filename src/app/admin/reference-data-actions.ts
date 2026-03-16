@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache'
 
 export async function createAirline(data: { name: string; code: string }) {
   try {
-    const { error } = await supabaseAdmin.from('settings_airlines').insert(data)
+    const { error } = await supabaseAdmin.from('setting_airlines').insert(data)
     if (error) throw error
     revalidatePath('/admin/settings/airlines')
     return { success: true }
@@ -23,7 +23,7 @@ export async function createAirline(data: { name: string; code: string }) {
 
 export async function updateAirline(id: string, data: { name: string; code: string }) {
   try {
-    const { error } = await supabaseAdmin.from('settings_airlines').update(data).eq('id', id)
+    const { error } = await supabaseAdmin.from('setting_airlines').update(data).eq('id', id)
     if (error) throw error
     revalidatePath('/admin/settings/airlines')
     return { success: true }
@@ -38,7 +38,7 @@ export async function updateAirline(id: string, data: { name: string; code: stri
 
 export async function deleteAirline(id: string) {
   try {
-    const { error } = await supabaseAdmin.from('settings_airlines').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('setting_airlines').delete().eq('id', id)
     if (error) throw error
     revalidatePath('/admin/settings/airlines')
     return { success: true }
@@ -60,7 +60,7 @@ export async function getCurrencies(params: {
   const to = from + pageSize - 1
 
   let query = supabaseAdmin
-    .from('settings_currencies')
+    .from('setting_currencies')
     .select('*', { count: 'exact' })
     .order('code', { ascending: true })
 
@@ -80,7 +80,7 @@ export async function getCurrencies(params: {
 
 export async function createCurrency(data: { code: string; name?: string; symbol?: string; id?: number }) {
   try {
-    const { error } = await supabaseAdmin.from('settings_currencies').insert(data)
+    const { error } = await supabaseAdmin.from('setting_currencies').insert(data)
     if (error) throw error
     revalidatePath('/admin/settings/currencies')
     return { success: true }
@@ -95,7 +95,7 @@ export async function createCurrency(data: { code: string; name?: string; symbol
 
 export async function updateCurrency(id: string | number, data: { code: string; name?: string; symbol?: string }) {
   try {
-    const { error } = await supabaseAdmin.from('settings_currencies').update(data).eq('id', id)
+    const { error } = await supabaseAdmin.from('setting_currencies').update(data).eq('id', id)
     if (error) throw error
     revalidatePath('/admin/settings/currencies')
     return { success: true }
@@ -110,7 +110,7 @@ export async function updateCurrency(id: string | number, data: { code: string; 
 
 export async function deleteCurrency(id: string) {
   try {
-    const { error } = await supabaseAdmin.from('settings_currencies').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('setting_currencies').delete().eq('id', id)
     if (error) throw error
     revalidatePath('/admin/settings/currencies')
     return { success: true }
@@ -124,7 +124,7 @@ export async function deleteCurrency(id: string) {
 
 export async function createRegion(data: { code: string }) {
   try {
-    const { error } = await supabaseAdmin.from('settings_regions').insert(data)
+    const { error } = await supabaseAdmin.from('setting_regions').insert(data)
     if (error) throw error
     revalidatePath('/admin/settings/regions')
     return { success: true }
@@ -139,7 +139,7 @@ export async function createRegion(data: { code: string }) {
 
 export async function updateRegion(id: string, data: { code: string }) {
   try {
-    const { error } = await supabaseAdmin.from('settings_regions').update(data).eq('id', id)
+    const { error } = await supabaseAdmin.from('setting_regions').update(data).eq('id', id)
     if (error) throw error
     revalidatePath('/admin/settings/regions')
     return { success: true }
@@ -154,7 +154,7 @@ export async function updateRegion(id: string, data: { code: string }) {
 
 export async function deleteRegion(id: string) {
   try {
-    const { error } = await supabaseAdmin.from('settings_regions').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('setting_regions').delete().eq('id', id)
     if (error) throw error
     revalidatePath('/admin/settings/regions')
     return { success: true }
@@ -176,7 +176,7 @@ export async function getBookingStatuses(params: {
   const to = from + pageSize - 1
 
   let query = supabaseAdmin
-    .from('settings_booking_statuses')
+    .from('setting_booking_statuses')
     .select('*', { count: 'exact' })
     .order('name', { ascending: true })
 
@@ -196,7 +196,7 @@ export async function getBookingStatuses(params: {
 
 export async function createBookingStatus(data: { id?: number; code: string; name: string }) {
   try {
-    const { error } = await supabaseAdmin.from('settings_booking_statuses').insert(data)
+    const { error } = await supabaseAdmin.from('setting_booking_statuses').insert(data)
     if (error) throw error
     revalidatePath('/admin/settings/booking-statuses')
     return { success: true }
@@ -211,7 +211,7 @@ export async function createBookingStatus(data: { id?: number; code: string; nam
 
 export async function updateBookingStatus(id: number, data: { code: string; name: string }) {
   try {
-    const { error } = await supabaseAdmin.from('settings_booking_statuses').update(data).eq('id', id)
+    const { error } = await supabaseAdmin.from('setting_booking_statuses').update(data).eq('id', id)
     if (error) throw error
     revalidatePath('/admin/settings/booking-statuses')
     return { success: true }
@@ -223,7 +223,7 @@ export async function updateBookingStatus(id: number, data: { code: string; name
 
 export async function deleteBookingStatus(id: number) {
   try {
-    const { error } = await supabaseAdmin.from('settings_booking_statuses').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('setting_booking_statuses').delete().eq('id', id)
     if (error) throw error
     revalidatePath('/admin/settings/booking-statuses')
     return { success: true }
@@ -245,7 +245,7 @@ export async function getCountries(params: {
   const to = from + pageSize - 1
 
   let query = supabaseAdmin
-    .from('settings_countries')
+    .from('setting_countries')
     .select('*', { count: 'exact' })
     .order('name', { ascending: true })
 
@@ -272,7 +272,7 @@ export async function createCountry(data: {
   phone_prefix?: string
 }) {
   try {
-    const { error } = await supabaseAdmin.from('settings_countries').insert(data)
+    const { error } = await supabaseAdmin.from('setting_countries').insert(data)
     if (error) throw error
     revalidatePath('/admin/settings/countries')
     return { success: true }
@@ -293,7 +293,7 @@ export async function updateCountry(id: number, data: {
   phone_prefix?: string
 }) {
   try {
-    const { error } = await supabaseAdmin.from('settings_countries').update(data).eq('id', id)
+    const { error } = await supabaseAdmin.from('setting_countries').update(data).eq('id', id)
     if (error) throw error
     revalidatePath('/admin/settings/countries')
     return { success: true }
@@ -305,7 +305,7 @@ export async function updateCountry(id: number, data: {
 
 export async function deleteCountry(id: number) {
   try {
-    const { error } = await supabaseAdmin.from('settings_countries').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('setting_countries').delete().eq('id', id)
     if (error) throw error
     revalidatePath('/admin/settings/countries')
     return { success: true }

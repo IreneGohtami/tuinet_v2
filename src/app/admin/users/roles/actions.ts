@@ -96,9 +96,9 @@ export async function updateRolePermissions(
 export async function getReferenceData() {
   try {
     const [airlines, regions, currencies] = await Promise.all([
-      supabaseAdmin.from('settings_airlines').select('id, name, code').order('name'),
-      supabaseAdmin.from('settings_regions').select('id, code').order('code'),
-      supabaseAdmin.from('settings_currencies').select('id, code').order('code')
+      supabaseAdmin.from('setting_airlines').select('id, name, code').order('name'),
+      supabaseAdmin.from('setting_regions').select('id, code').order('code'),
+      supabaseAdmin.from('setting_currencies').select('id, code').order('code')
     ])
 
     return {

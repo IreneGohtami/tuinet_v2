@@ -9,8 +9,8 @@ export default async function AirlineSmtpPage({ params }: { params: Promise<{ id
   const { id } = await params
 
   const [airlineResult, smtpResult] = await Promise.all([
-    supabaseAdmin.from('settings_airlines').select('*').eq('id', id).single(),
-    supabaseAdmin.from('settings_airline_smtp').select('*').eq('airline_id', id).single()
+    supabaseAdmin.from('setting_airlines').select('*').eq('id', id).single(),
+    supabaseAdmin.from('setting_airline_smtp').select('*').eq('airline_id', id).single()
   ])
 
   if (airlineResult.error || !airlineResult.data) {

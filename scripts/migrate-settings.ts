@@ -2,11 +2,11 @@ import mssql from 'mssql'
 import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
 import countries from 'i18n-iso-countries'
-import en from 'i18n-iso-countries/langs/en.json'
-import es from 'i18n-iso-countries/langs/es.json'
+//import en from 'i18n-iso-countries/langs/en.json'
+//import es from 'i18n-iso-countries/langs/es.json'
 
-countries.registerLocale(en)
-countries.registerLocale(es)
+//countries.registerLocale(en)
+//countries.registerLocale(es)
 
 dotenv.config({ path: '.env.local' })
 
@@ -31,24 +31,31 @@ const mssqlConfig = {
 }
 
 const MAPPINGS = {
-  settings_booking_statuses: {
+  setting_booking_statuses: {
     AtributoId: 'id',
     Valor: 'code',
     ValorInterno: 'name'
   },
-  settings_countries: {
+  setting_countries: {
     PaisId: 'id',
     Nombre: 'name',
     IsoAlfa2: 'iso_alpha2',
     IsoAlfa3: 'iso_alpha3',
     IsoNum: 'iso_num',
     PrefijoTelefono: 'phone_prefix'
+  },
+  inventory_suppliers: {
+    ProveedorId: 'id',
+    CIF: 'cif',
+    CodigoProveedor: 'provider_code',
+    Activo: 'is_active'
   }
 }
 
 const TABLE_MAP = {
-  settings_booking_statuses: { mssql: 'dbo.Atributo', id_col: 'AtributoId' },
-  settings_countries: { mssql: 'dbo.Pais', id_col: 'PaisId' }
+  setting_booking_statuses: { mssql: 'dbo.Atributo', id_col: 'AtributoId' },
+  setting_countries: { mssql: 'dbo.Pais', id_col: 'PaisId' },
+  inventory_suppliers: { mssql: 'dbo.Proveedor', id_col: 'ProveedorId' }
 }
 
 async function upsertBatch(tableName: string, records: any[]) {
@@ -69,7 +76,7 @@ async function upsertBatch(tableName: string, records: any[]) {
     })
 
     // Special translation for countries
-    if (tableName === 'settings_countries' && dbRecord.name && (dbRecord.iso_alpha2 || dbRecord.iso_alpha3)) {
+    if (tableName === 'setting_countries' && dbRecord.name && (dbRecord.iso_alpha2 || dbRecord.iso_alpha3)) {
       const isoCode = dbRecord.iso_alpha2 || dbRecord.iso_alpha3
       const englishName = countries.getName(isoCode, 'en')
       if (englishName) {
@@ -98,19 +105,41 @@ async function runMigration() {
     const pool = await mssql.connect(mssqlConfig)
 
     /*console.log('[REFERENCE] Migrating Booking Statuses...')
-    const statusResult = await pool.request().query(`SELECT * FROM ${TABLE_MAP.settings_booking_statuses.mssql} WHERE Codigo = 'EstadoReserva'`)
+    const statusResult = await pool.request().query(`SELECT * FROM ${TABLE_MAP.setting_booking_statuses.mssql} WHERE Codigo = 'EstadoReserva'`)
 
     if (statusResult.recordset.length > 0) {
-      await upsertBatch('settings_booking_statuses', statusResult.recordset)
+      await upsertBatch('setting_booking_statuses', statusResult.recordset)
       console.log(`[SUCCESS] Upserted ${statusResult.recordset.length} booking statuses`)
-    }*/
+    }
 
     console.log('[REFERENCE] Migrating Countries...')
-    const countryResult = await pool.request().query(`SELECT * FROM ${TABLE_MAP.settings_countries.mssql}`)
+    const countryResult = await pool.request().query(`SELECT * FROM ${TABLE_MAP.setting_countries.mssql}`)
 
     if (countryResult.recordset.length > 0) {
-      await upsertBatch('settings_countries', countryResult.recordset)
+      await upsertBatch('setting_countries', countryResult.recordset)
       console.log(`[SUCCESS] Upserted ${countryResult.recordset.length} countries`)
+    }*/
+
+    console.log('[INVENTORY] Migrating Suppliers...')
+    // Join Proveedor (entity) with ProveedorProveedor (codes) — take the first active code per supplier
+    const supplierResult = await pool.request().query(`
+      SELECT
+        p.ProveedorId,
+        p.CIF,
+        COALESCE(p.NombreFiscal COLLATE DATABASE_DEFAULT, pp.CodigoProveedor COLLATE DATABASE_DEFAULT) AS CodigoProveedor,
+        CAST(COALESCE(pp.Activo, 1) AS BIT) AS Activo
+      FROM dbo.Proveedor p
+      LEFT JOIN (
+        SELECT IdProveedorMapeado, CodigoProveedor, Activo,
+               ROW_NUMBER() OVER (PARTITION BY IdProveedorMapeado ORDER BY Activo DESC, ProveedorProveedorId ASC) AS rn
+        FROM dbo.ProveedorProveedor
+      ) pp ON pp.IdProveedorMapeado = p.ProveedorId AND pp.rn = 1
+      WHERE /*p.Activo = 1 AND*/ pp.Activo = 1
+    `)
+
+    if (supplierResult.recordset.length > 0) {
+      await upsertBatch('inventory_suppliers', supplierResult.recordset)
+      console.log(`[SUCCESS] Upserted ${supplierResult.recordset.length} suppliers`)
     }
 
     await pool.close()

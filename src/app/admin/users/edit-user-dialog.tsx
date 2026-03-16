@@ -89,7 +89,7 @@ export function EditUserDialog({ user, roles }: EditUserDialogProps) {
                   id="role"
                   name="role"
                   defaultValue={user.role}
-                  className="input-standard"
+                  className="select-standard"
                 >
                   {roles.map((role) => (
                     <option key={role.id} value={role.name}>

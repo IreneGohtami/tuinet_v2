@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache'
 export async function saveSMTPSettings(airlineId: string, data: Record<string, unknown>) {
   try {
     const { error } = await supabaseAdmin
-      .from('settings_airline_smtp')
+      .from('setting_airline_smtp')
       .upsert({
         airline_id: airlineId,
         ...data,

@@ -9,7 +9,7 @@ import Link from 'next/link'
 
 export default async function AirlinesPage() {
   const [{ data: airlines, error }, permissions] = await Promise.all([
-    supabaseAdmin.from('settings_airlines').select('*').order('name', { ascending: true }),
+    supabaseAdmin.from('setting_airlines').select('*').order('name', { ascending: true }),
     getModulePermissions('settings')
   ])
 

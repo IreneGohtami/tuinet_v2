@@ -13,9 +13,19 @@ import {
   Info,
   Calendar,
   MapPin,
-  ArrowRight
+  Tag
 } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { FlightDetailDialog } from './flight-detail-dialog'
+import { HotelDetailDialog } from './hotel-detail-dialog'
+import { PvpDetailDialog } from './pvp-detail-dialog'
+import {
+  type RefData,
+  getCurrencyCode as getRefCurrencyCode,
+  getCountryName as getRefCountryName,
+  getStatusName as getRefStatusName,
+  formatDate
+} from './utils'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -43,22 +53,52 @@ interface Passenger {
 interface Flight {
   id: number
   description?: string
-  provider_locator?: string
-  price_with_taxes?: number
+  pnr_code?: string
+  departure_terminal?: string
+  arrival_terminal?: string
   adult_count: number
   child_count: number
   infant_count: number
-  departure_terminal?: string
-  arrival_terminal?: string
-  airline_locator?: string
+  cabin_class?: string
+  cost_currency_id?: number
+  cost_currency_exchange_rate?: number
+  cost_per_pax?: number
+  price_with_taxes?: number
+  pvp_per_pax?: number
+  item_status_id?: number
+  destination_id?: number
+  adult_baggage?: string
+  child_baggage?: string
+  infant_baggage?: string
+  airline_contract_ids?: string
 }
 
 interface HotelService {
   id: number
-  description?: string
-  check_in_date: string
-  check_out_date: string
-  pvp_per_pax?: number
+  description?: string | null
+  check_in_date?: string | null
+  check_out_date?: string | null
+  item_status_id?: number | null
+  hotel_contract_id?: number | null
+  hotel_feature_id?: number | null
+  board_basis_id?: number | null
+  adult_count: number
+  child_count: number
+  infant_count: number
+  room_count: number
+  destination_id?: number | null
+  supplier_id?: number | null
+  cost_per_pax?: number | null
+  pvp_per_pax?: number | null
+  cost_currency_id?: number | null
+  cost_currency_exchange_rate?: number | null
+  settlement_currency_id?: number | null
+  settlement_currency_exchange_rate?: number | null
+  net_commissionable?: string | null
+  confirmation_ref?: string | null
+  supplier_locator?: string | null
+  additional_locator?: string | null
+  in_voucher?: boolean | null
 }
 
 interface Tour {
@@ -73,6 +113,24 @@ interface Transfer {
   pickup_location?: string
 }
 
+interface OtherService {
+  id: number
+  description?: string | null
+  service_date?: string | null
+  item_status_id?: number | null
+  supplier_id?: number | null
+  destination_id?: number | null
+  adult_count?: number | null
+  child_count?: number | null
+  infant_count?: number | null
+  cost_per_pax?: number | null
+  pvp_per_pax?: number | null
+  confirmation_ref?: string | null
+  supplier_locator?: string | null
+  net_commissionable?: string | null
+  in_voucher?: boolean | null
+}
+
 interface InvoiceDetail {
   tax_base: number
   vat: number
@@ -83,6 +141,20 @@ interface Invoice {
   invoice_number?: string
   invoice_date: string
   booking_invoice_details?: InvoiceDetail[]
+}
+
+interface PvpDetail {
+  id: number
+  name?: string
+  component?: string
+  direction?: string
+  passenger_count?: number
+  pvp_per_pax?: number
+  tax_type?: string
+  tax_rate?: string
+  tax_amount?: number
+  net_commissionable?: string
+  is_invoiced?: boolean
 }
 
 export default async function BookingDetailPage({ params }: PageProps) {
@@ -118,22 +190,13 @@ export default async function BookingDetailPage({ params }: PageProps) {
   const hotels = booking.hotels as HotelService[]
   const tours = booking.tours as Tour[]
   const transfers = booking.transfers as Transfer[]
+  const otherServices = booking.other_services as OtherService[]
   const invoices = booking.invoices as Invoice[]
+  const pvpDetails = booking.pvp_details as PvpDetail[]
 
-  const getCountryName = (countryId?: number) => {
-    if (!countryId) return null
-    return refData.countries.find(c => c.id === countryId)?.name
-  }
-
-  const formatDate = (dateInput: string | Date) => {
-    if (!dateInput) return 'N/A'
-    const date = new Date(dateInput)
-    if (isNaN(date.getTime())) return 'N/A'
-    const d = String(date.getDate()).padStart(2, '0')
-    const m = String(date.getMonth() + 1).padStart(2, '0')
-    const y = date.getFullYear()
-    return `${d}/${m}/${y}`
-  }
+  const getCountryName = (id?: number | null) => getRefCountryName(refData as unknown as RefData, id)
+  const getBookingItemStatusName = (id?: number | null) => getRefStatusName(refData as unknown as RefData, id) || 'N/A'
+  const getCurrencyCode = (id?: number | null) => getRefCurrencyCode(refData as unknown as RefData, id)
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20">
@@ -237,6 +300,79 @@ export default async function BookingDetailPage({ params }: PageProps) {
 
         {/* Column 2 & 3: Tabs for Services */}
         <div className="lg:col-span-2 space-y-8">
+
+          {/* PVP Details */}
+          {pvpDetails.length > 0 && (
+            <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-secondary/30 px-6 py-4 flex items-center justify-between border-b border-border">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <Tag className="h-5 w-5 text-primary" /> PVP Details (All Components)
+                </h3>
+                <span className="text-sm font-semibold px-2 py-1 ">
+                  <span className="text-muted-foreground">{pvpDetails.length} items</span>
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="table-standard">
+                  <thead className="table-head-standard">
+                    <tr>
+                      <th className="table-th-standard">Name</th>
+                      <th className="table-th-standard">Component</th>
+                      <th className="table-th-standard">Pax</th>
+                      <th className="table-th-standard text-right">PVP/Pax</th>
+                      <th className="table-th-standard"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const compTypeCounts: Record<string, number> = {}
+                      return pvpDetails.map((pvp) => {
+                        const compType = pvp.component || 'Other'
+                        const occurrenceIndex = compTypeCounts[compType] || 0
+                        compTypeCounts[compType] = occurrenceIndex + 1
+
+                        const getRelatedComponent = () => {
+                          if (compType === 'Flight') return flights.filter(f => f.pvp_per_pax !== 0) // Only display/edit non-zero PVP segments
+                          if (compType === 'Hotel') return hotels[occurrenceIndex]
+                          if (compType === 'Tour') return tours[occurrenceIndex]
+                          if (compType === 'Transfer') return transfers[occurrenceIndex]
+                          if (compType === 'Others') return otherServices[occurrenceIndex]
+                          return null
+                        }
+
+                        return (
+                          <tr key={pvp.id} className="table-row-standard">
+                            <td className="table-td-standard">
+                              <div className="font-medium">{pvp.name || '-'}</div>
+                            </td>
+                            <td className="table-td-standard">
+                              <div className="font-medium">{pvp.component || '-'}</div>
+                              <span className="text-xs text-muted-foreground">{pvp.direction || ''}</span>
+                            </td>
+                            <td className="table-td-standard">
+                              <span className="text-xs">{pvp.passenger_count || '-'}</span>
+                            </td>
+                            <td className="table-td-standard text-right">
+                              <div className="space-y-1">
+                                {pvp.pvp_per_pax ? pvp.pvp_per_pax.toLocaleString() : '-'}
+                                {pvp.pvp_per_pax ? <div className="text-[10px] text-muted-foreground">{currencyCode}</div> : null}
+                              </div>
+                            </td>
+                            <td className="table-td-standard text-right">
+                              <div className="flex justify-end">
+                                <PvpDetailDialog pvpDetail={pvp} relatedComponent={getRelatedComponent()} refData={refData as unknown as RefData} mode="view" />
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
           {/* Flights */}
           {flights.length > 0 && (
             <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
@@ -244,48 +380,76 @@ export default async function BookingDetailPage({ params }: PageProps) {
                 <h3 className="text-lg font-bold flex items-center gap-2">
                   <Plane className="h-5 w-5 text-primary" /> Flights
                 </h3>
-                <span className="text-xs font-semibold bg-background px-2 py-1 rounded-md border border-border">
-                  {flights.length} Service{flights.length > 1 ? 's' : ''}
+                <span className="text-sm font-semibold px-2 py-1 ">
+                  <span className="text-muted-foreground">PNR: </span> {flights[0]?.pnr_code || 'N/A'}
                 </span>
               </div>
-              <div className="p-6 space-y-6">
-                {flights.map((f) => (
-                  <div key={f.id} className="border border-border/60 rounded-xl p-5 hover:bg-secondary/5 transition-colors">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-3 bg-primary/10 rounded-lg">
-                          <Plane className="h-6 w-6 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-lg">{f.description || 'Flight Service'}</p>
-                          <p className="text-xs text-muted-foreground uppercase font-medium">Provider Ref: <span className="text-foreground">{f.provider_locator || 'N/A'}</span></p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xl font-extrabold text-primary">{f.price_with_taxes?.toLocaleString()} {booking.currency_id}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Service Price</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-4 pt-4 border-t border-border/40">
-                      <div>
-                        <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-widest mb-1">Adults / Kids / Inf</p>
-                        <p className="font-semibold">{f.adult_count} / {f.child_count} / {f.infant_count}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-widest mb-1">Departure</p>
-                        <p className="font-semibold">{f.departure_terminal || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-widest mb-1">Arrival</p>
-                        <p className="font-semibold">{f.arrival_terminal || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-[10px] uppercase font-bold tracking-widest mb-1">Airline Ref</p>
-                        <p className="font-semibold">{f.airline_locator || 'N/A'}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="table-standard">
+                  <thead className="table-head-standard">
+                    <tr>
+                      <th className="table-th-standard">Class</th>
+                      <th className="table-th-standard">Status</th>
+                      <th className="table-th-standard">Route</th>
+                      <th className="table-th-standard">Pax</th>
+                      <th className="table-th-standard text-right">Cost/Pax</th>
+                      <th className="table-th-standard text-right">Total Cost</th>
+                      <th className="table-th-standard"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {flights.map((f) => (
+                      <tr key={f.id} className="table-row-standard">
+                        <td className="table-td-standard">{f.cabin_class || 'N/A'}</td>
+                        <td className="table-td-standard">
+                          {getBookingItemStatusName(f.item_status_id)}
+                        </td>
+                        <td className="table-td-standard">
+                          {getCountryName(f.destination_id) || 'N/A'}
+                        </td>
+                        <td className="table-td-standard">
+                          <div className="text-xs space-y-1">
+                            {f.adult_count > 0 && (
+                              <div>
+                                <div>Adult ({f.adult_count})</div>
+                                {f.adult_baggage && <div className="text-muted-foreground">{f.adult_baggage}</div>}
+                              </div>
+                            )}
+                            {f.child_count > 0 && (
+                              <div>
+                                <div>Child ({f.child_count})</div>
+                                {f.child_baggage && <div className="text-muted-foreground">{f.child_baggage}</div>}
+                              </div>
+                            )}
+                            {f.infant_count > 0 && (
+                              <div>
+                                <div>Infant ({f.infant_count})</div>
+                                {f.infant_baggage && <div className="text-muted-foreground">{f.infant_baggage}</div>}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="table-td-standard text-right">
+                          <div className="space-y-1">
+                            {f.cost_per_pax ? f.cost_per_pax.toLocaleString() : '-'}
+                            {f.cost_per_pax ? <div className="text-xs text-muted-foreground">{currencyCode}</div> : null}
+                          </div>
+                        </td>
+                        <td className="table-td-standard text-right">
+                          <div className="space-y-1">
+                            {f.price_with_taxes ? f.price_with_taxes.toLocaleString() : '-'}
+                            {f.price_with_taxes ? <div className="text-xs text-muted-foreground">{currencyCode}</div> : null}
+                          </div>
+                        </td>
+                        <td className="table-td-standard text-right">
+                          <div className="flex justify-end">
+                            <FlightDetailDialog flight={f} refData={refData} mode="view" />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </section>
           )}
@@ -297,26 +461,75 @@ export default async function BookingDetailPage({ params }: PageProps) {
                 <h3 className="text-lg font-bold flex items-center gap-2">
                   <Hotel className="h-5 w-5 text-primary" /> Hotels
                 </h3>
+                <span className="text-sm font-semibold px-2 py-1 ">
+                  <span className="text-muted-foreground">Confirmation: </span> {hotels[0]?.confirmation_ref || 'N/A'}
+                </span>
               </div>
-              <div className="p-6 space-y-6">
-                {hotels.map((h) => (
-                  <div key={h.id} className="border border-border/60 rounded-xl p-5 hover:bg-secondary/5 transition-colors">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <h4 className="font-bold text-lg">{h.description || 'Hotel Service'}</h4>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {formatDate(h.check_in_date)}</span>
-                          <ArrowRight className="h-3 w-3" />
-                          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {formatDate(h.check_out_date)}</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-primary">{h.pvp_per_pax?.toLocaleString()} {booking.currency_id}</p>
-                        <p className="text-[10px] text-muted-foreground">Per PAX</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="table-standard">
+                  <thead className="table-head-standard">
+                    <tr>
+                      <th className="table-th-standard">Hotel Name</th>
+                      <th className="table-th-standard">Status</th>
+                      <th className="table-th-standard">Check In - Out</th>
+                      <th className="table-th-standard">Pax</th>
+                      <th className="table-th-standard text-right">PVP/Pax</th>
+                      <th className="table-th-standard text-right">Cost/Pax</th>
+                      <th className="table-th-standard"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hotels.map((h) => (
+                      <tr key={h.id} className="table-row-standard">
+                        <td className="table-td-standard">
+                          <div className="font-medium">{h.description || 'Hotel Service'}</div>
+                        </td>
+                        <td className="table-td-standard">
+                          {getBookingItemStatusName(h.item_status_id)}
+                        </td>
+                        <td className="table-td-standard">
+                          <div className="text-xs space-y-0.5">
+                            <div className="flex items-center gap-1">
+                              <span>{formatDate(h.check_in_date)} - {formatDate(h.check_out_date)}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="table-td-standard">
+                          <div className="text-xs space-y-0.5">
+                            <div className="text-xs space-y-1">
+                              {h.adult_count > 0 && (
+                                <div>Adult ({h.adult_count})</div>
+                              )}
+                              {h.child_count > 0 && (
+                                <div>Child ({h.child_count})</div>
+                              )}
+                              {h.infant_count > 0 && (
+                                <div>Infant ({h.infant_count})</div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="table-td-standard text-right">
+                          <div className="space-y-1">
+                            {h.pvp_per_pax ? h.pvp_per_pax.toLocaleString() : '-'}
+                            {h.pvp_per_pax ? <div className="text-[10px] text-muted-foreground">{currencyCode}</div> : null}
+                          </div>
+                        </td>
+                        <td className="table-td-standard text-right">
+                          <div className="space-y-1">
+                            {h.cost_per_pax ? h.cost_per_pax.toLocaleString() : '-'}
+                            {h.cost_per_pax ? <div className="text-[10px] text-muted-foreground">{getCurrencyCode(h.cost_currency_id)}</div> : null}
+                          </div>
+                        </td>
+                        <td className="table-td-standard text-right">
+                          <div className="flex justify-end">
+                            <HotelDetailDialog hotel={h} refData={refData} mode="view" />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </section>
           )}
@@ -365,6 +578,68 @@ export default async function BookingDetailPage({ params }: PageProps) {
               </section>
             )}
           </div>
+
+          {/* PVP Details - Others */}
+          {booking.pvp_details && booking.pvp_details.filter((pvp: any) => pvp.component === 'Others').length > 0 && (
+            <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-secondary/30 px-6 py-4 flex items-center justify-between border-b border-border">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" /> Other Services
+                </h3>
+                <span className="text-xs font-semibold bg-background px-2 py-1 rounded-md border border-border">
+                  {booking.other_services?.length || 0} Service{(booking.other_services?.length || 0) !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="table-standard">
+                  <thead className="table-head-standard">
+                    <tr>
+                      <th className="table-th-standard">Description</th>
+                      <th className="table-th-standard">Date</th>
+                      <th className="table-th-standard">Status</th>
+                      <th className="table-th-standard text-right">Price/Pax</th>
+                      <th className="table-th-standard">Destination</th>
+                      <th className="table-th-standard">Pax</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {booking.other_services?.map((service: any) => (
+                      <tr key={service.id} className="table-row-standard">
+                        <td className="table-td-standard font-medium">{service.description || 'N/A'}</td>
+                        <td className="table-td-standard">{service.service_date ? formatDate(service.service_date) : 'N/A'}</td>
+                        <td className="table-td-standard">
+                          {getBookingItemStatusName(service.item_status_id)}
+                        </td>
+                        <td className="table-td-standard text-right font-semibold">
+                          {service.pvp_per_pax ? `${service.pvp_per_pax.toLocaleString()} ${currencyCode}` : 'N/A'}
+                        </td>
+                        <td className="table-td-standard">
+                          {getCountryName(service.destination_id) || 'N/A'}
+                        </td>
+                        <td className="table-td-standard">
+                          <div className="text-xs space-y-1">
+                            {service.adult_count > 0 && (
+                              <div>Adult ({service.adult_count})</div>
+                            )}
+                            {service.child_count > 0 && (
+                              <div>Child ({service.child_count})</div>
+                            )}
+                            {service.infant_count > 0 && (
+                              <div>Infant ({service.infant_count})</div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )) || (
+                      <tr>
+                        <td colSpan={6} className="table-td-standard py-8 text-center text-muted-foreground italic">No other services found</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           {/* Invoices */}
           <section className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">

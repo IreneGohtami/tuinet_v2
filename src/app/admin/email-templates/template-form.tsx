@@ -107,7 +107,7 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
               <select
                 name="airline_id"
                 defaultValue={(initialData?.airline_id as string) || ''}
-                className="input-standard"
+                className="select-standard"
               >
                 <option value="">Global Default</option>
                 {airlines.map(a => (
@@ -121,7 +121,7 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
               <select
                 name="region_id"
                 defaultValue={(initialData?.region_id as string) || ''}
-                className="input-standard"
+                className="select-standard"
               >
                 <option value="">Global/Any</option>
                 {regions.map(r => (
@@ -135,7 +135,7 @@ export function TemplateForm({ initialData, airlines, regions, currencies }: Tem
               <select
                 name="currency_id"
                 defaultValue={(initialData?.currency_id as string) || ''}
-                className="input-standard"
+                className="select-standard"
               >
                 <option value="">Any</option>
                 {currencies.map(c => (

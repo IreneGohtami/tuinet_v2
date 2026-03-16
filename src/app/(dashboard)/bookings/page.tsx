@@ -15,7 +15,6 @@ interface PageProps {
 export default async function BookingsPage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams
   const page = Number(resolvedParams.page) || 1
-  const search = typeof resolvedParams.search === 'string' ? resolvedParams.search : ''
   const pageSize = 10
 
   // Filters from URL
@@ -39,7 +38,6 @@ export default async function BookingsPage({ searchParams }: PageProps) {
     getBookings({
       page,
       pageSize,
-      searchQuery: search,
       bookingReference,
       dateFrom,
       dateTo,
@@ -79,7 +77,6 @@ export default async function BookingsPage({ searchParams }: PageProps) {
           totalCount={totalCount || 0}
           pageSize={pageSize}
           currentPage={page}
-          searchQuery={search}
           referenceData={refData}
           activeFilters={{
             bookingReference,

@@ -17,7 +17,10 @@ import {
   User,
   Globe,
   Plane,
-  RefreshCw
+  RefreshCw,
+  Hotel,
+  Map,
+  Car
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { MultiSelectDropdown } from '@/components/ui/multi-select-dropdown'
@@ -29,15 +32,19 @@ interface Booking {
   id: number
   locator: string
   booking_reference: string | null
-  reference: string | null
   created_at: string
   total_amount: number
   status_id: number
+  admin_status: string
   currency_id: number
   sales_channel_value: string | null
   passenger_email: string
   passenger_name: string
   region_code: string | null
+  booking_flights?: any[]
+  booking_hotels?: any[]
+  booking_tours?: any[]
+  booking_transfers?: any[]
 }
 
 interface ReferenceItem {
@@ -59,7 +66,6 @@ interface BookingTableProps {
   totalCount: number
   pageSize: number
   currentPage: number
-  searchQuery: string
   referenceData: ReferenceData
   activeFilters: {
     bookingReference?: string
@@ -78,7 +84,6 @@ export function BookingTable({
   totalCount,
   pageSize,
   currentPage,
-  searchQuery: initialSearchQuery,
   referenceData,
   activeFilters
 }: BookingTableProps) {
@@ -89,7 +94,7 @@ export function BookingTable({
 
   // Local state for filters being edited
   const [filters, setFilters] = useState({
-    bookingReference: activeFilters.bookingReference || initialSearchQuery || '',
+    bookingReference: activeFilters.bookingReference || '',
     dateFrom: activeFilters.dateFrom || '',
     dateTo: activeFilters.dateTo || '',
     airlines: activeFilters.airlines || [],
@@ -114,9 +119,8 @@ export function BookingTable({
     startTransition(() => {
 
       const params = new URLSearchParams()
-      // Combined search / reference
-      if (filters.bookingReference) params.set('ref', filters.bookingReference)
 
+      if (filters.bookingReference) params.set('ref', filters.bookingReference)
       if (filters.dateFrom) params.set('from', filters.dateFrom)
       if (filters.dateTo) params.set('to', filters.dateTo)
       if (filters.customerEmail) params.set('email', filters.customerEmail)
@@ -314,6 +318,7 @@ export function BookingTable({
               <tr>
                 <th className="table-th-standard">Booking Ref</th>
                 <th className="table-th-standard">Customer</th>
+                <th className="table-th-standard">Items</th>
                 <th className="table-th-standard">Details</th>
                 <th className="table-th-standard">Date</th>
                 <th className="table-th-standard text-right">Amount</th>
@@ -330,7 +335,7 @@ export function BookingTable({
                   >
                     <div className="flex flex-col">
                       <span className="font-bold text-base text-foreground group-hover:text-primary transition-colors underline-offset-4 group-hover:underline">
-                        {booking.booking_reference || booking.reference || 'None'}
+                        {booking.booking_reference || 'N/A'}
                       </span>
                     </div>
                   </td>
@@ -338,6 +343,30 @@ export function BookingTable({
                     <div className="flex flex-col">
                       <span className="font-medium text-foreground">{booking.passenger_name}</span>
                       <span className="text-xs text-muted-foreground">{booking.passenger_email}</span>
+                    </div>
+                  </td>
+                  <td className="table-td-standard">
+                    <div className="flex items-center gap-1.5">
+                      {booking.booking_flights && booking.booking_flights.length > 0 && (
+                        <span title="Flight">
+                          <Plane className="h-4 w-4 text-blue-500" />
+                        </span>
+                      )}
+                      {booking.booking_hotels && booking.booking_hotels.length > 0 && (
+                        <span title="Hotel">
+                          <Hotel className="h-4 w-4 text-green-500" />
+                        </span>
+                      )}
+                      {booking.booking_tours && booking.booking_tours.length > 0 && (
+                        <span title="Tour/Activity">
+                          <Map className="h-4 w-4 text-orange-500" />
+                        </span>
+                      )}
+                      {booking.booking_transfers && booking.booking_transfers.length > 0 && (
+                        <span title="Transfer">
+                          <Car className="h-4 w-4 text-purple-500" />
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="table-td-standard">
@@ -361,7 +390,7 @@ export function BookingTable({
                           const d = String(date.getDate()).padStart(2, '0')
                           const m = String(date.getMonth() + 1).padStart(2, '0')
                           const y = date.getFullYear()
-                          return `${d}/${m}/${y}`
+                          return `${y}/${m}/${d}`
                         })()}
                       </div>
                       <div className="text-[10px] text-muted-foreground/60 ml-4.5">
@@ -380,7 +409,12 @@ export function BookingTable({
                     </div>
                   </td>
                   <td className="table-td-standard text-center">
-                    <StatusBadge statusId={booking.status_id} bookingStatuses={referenceData.bookingStatuses} />
+                    <div className="flex flex-col gap-1">
+                      <StatusBadge statusId={booking.status_id} bookingStatuses={referenceData.bookingStatuses} />
+                      <span className="text-[10px] text-muted-foreground font-medium">
+                        {booking.admin_status || 'N/A'}
+                      </span>
+                    </div>
                   </td>
                   <td className="table-td-standard text-right">
                     <button
@@ -395,7 +429,7 @@ export function BookingTable({
               ))}
               {initialBookings.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-20 text-center text-muted-foreground">
+                  <td colSpan={8} className="p-20 text-center text-muted-foreground">
                     <div className="flex flex-col items-center gap-3">
                       <div className="p-4 bg-secondary/20 rounded-full">
                         <Search className="h-10 w-10 text-muted-foreground/20" />

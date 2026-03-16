@@ -93,7 +93,7 @@ export function CreateUserDialog({ roles }: { roles: { id: string; name: string 
               id="role"
               name="role"
               defaultValue={roles.find(r => r.name === 'user')?.name || roles[0]?.name}
-              className="input-standard"
+              className="select-standard"
             >
               {roles.map((role) => (
                 <option key={role.id} value={role.name}>
